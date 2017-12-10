@@ -44,6 +44,7 @@ getEIC <- function(raw, rtrange, mzrange){
 getIsoPat <- function(formula, d, threshold){
   data("isotopes", package = "enviPat")
   data("adducts", package = "enviPat")
+  if (!is.numeric(d)){d <- which(d == adducts$Name)}
   checked <- check_chemform(isotopes, formula)
   if (adduct > 0){
     if (adducts[d, 7] != 'FALSE'){
@@ -60,22 +61,25 @@ getIsoPat <- function(formula, d, threshold){
   return(as.data.frame(pattern))
 }
 
-getIsoEIC <- function(raw, formula, fmz, adduct = 1, ppm = 50, rtrange = c(0, Inf), threshold = 0.01){
-  
+getIsoEIC <- function(raw, formula, fmz, nmax = 3, adduct = 'M+H', ppm = 50, rtrange = c(0, Inf), threshold = 0.01){
+  data("adducts", package = "enviPat")
+  adduct <- which(adduct == adducts$Name)
   if (fmz < 0){
     pattern <- getIsoPat(formula, adduct, threshold)
-    nmax <- round(max(pattern[,1] - pattern[1,1]))
+    nmax <- min(nmax, round(max(pattern[,1] - pattern[1,1]))) 
     mzs <- sapply(0:nmax, function(n){
       pai <- pattern[round(pattern[,1]- pattern[1,1])==n,]
       pai[which.max(pai[,2]) ,1]
     })
   } else {
     data("adducts", package = "enviPat")
-    mzs <- (fmz + 0:2 * 1.0033) / abs(adducts[adduct, 3])
+    mzs <- (fmz + 0:nmax * 1.0033) / abs(adducts[adduct, 3])
   }
   
   mzranges <- do.call(rbind, lapply(mzs, function(mz){
-    mz <- mz + adducts$Mass[adduct]
+    if (fmz > 0){
+      mz <- mz + adducts$Mass[adduct]
+    }
     c(mz * (1 - ppm/2/10^6), mz * (1 + ppm/2/10^6))
   }))
   

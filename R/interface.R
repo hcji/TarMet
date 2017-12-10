@@ -28,6 +28,7 @@ runTarMet <- function(){
           
           h4('Isotopic Information (only used when the formula is given)'),
           numericInput('threshold', 'Input the threshold of the relative abundance of isotopic peaks', 0.001),
+          numericInput('nmax', 'Input n, where at most M+n isotopologues are detected.', 3),
           
           h4('EIC Information'),
           numericInput('ppm', 'Input the tolerance of the m/z difference (ppm)', 100),
@@ -61,8 +62,11 @@ runTarMet <- function(){
           
           h4('Alignment Information'),
           selectInput('ifalign', 'Select wether the EICs are aligned across samples or not', c(TRUE, FALSE)),
-          numericInput('align.shift', 'Input the maximum scans of shift', 20),
-          numericInput('align.seg', 'Input the size of segment of PAFFT', 20),
+          numericInput('align.shift', 'Input the maximum retention time of shift (s)', 20),
+          numericInput('align.seg', 'Input the size of segment of PAFFT (s)', 20),
+          
+          h4('Isotope Information'),
+          uiOutput('EICs_Control'),
           
           h5('The other parameters are the same as the isotopic analysis step. If you want to change them, please go back to the last step.')
         ),
@@ -94,8 +98,7 @@ runTarMet <- function(){
 
     EICs <- reactive({
       raw <- raw()
-      adduct <- which(input$adduct == adducts$Name)
-      eics <- getIsoEIC(raw, input$formula, input$fmz, adduct = adduct, ppm = input$ppm, rtrange = c(input$rtleft, input$rtright), threshold = input$threshold)
+      eics <- getIsoEIC(raw, input$formula, input$fmz, input$nmax, adduct =input$adduct, ppm = input$ppm, rtrange = c(input$rtleft, input$rtright), threshold = input$threshold)
       if (input$ifsmooth){
         eics$eics <- lapply(eics$eics, function(eic){
           eic$intensity <- eic$intensity - airPLS(eic$intensity)
@@ -145,14 +148,13 @@ runTarMet <- function(){
       peaks <- Peaks()
       eics <- EICs()
       UserPeakArea <- getArea(eics, input$target_left, input$target_right)
-      Ratio <- UserPeakArea/UserPeakArea[1]
+      Ratio <- UserPeakArea/UserPeakArea[1] * 100
       PeakArea <- cbind(peaks$PeakArea, UserPeakArea, Ratio)
       colnames(PeakArea)[((ncol(PeakArea)-1) : ncol(PeakArea))] <- c('User Define', 'relative area (user)')
       
       if(input$fmz < 0){
-        adduct <- which(input$adduct == adducts$Name)
         pattern <- getIsoPat(formula, adduct, threshold = input$threshold)
-        nmax <- round(max(pattern[,1] - pattern[1,1]))
+        nmax <- min(input$nmax,round(max(pattern[,1] - pattern[1,1])))
         ints <- sapply(0:nmax, function(n){
           pai <- pattern[round(pattern[,1]- pattern[1,1])==n,]
           sum(pai[,2])
@@ -174,10 +176,19 @@ runTarMet <- function(){
       input$files$datapath
     })
     
+    output$EICs_Control <-  renderUI({
+      mzrange <- EICs()$mzs
+      selection <- (1:nrow(mzrange))
+      tagList(
+        selectInput('eics_iso','Select which isotope feature is used for quantification',selection)
+      )
+    })
+    
     files_eics <- reactive({
       eic <- EICs()$eics[[1]]
       rawfiles <- lapply(filepathes(), LoadData)
-      mzrange <- EICs()$mzs[1,]
+      ind <- as.numeric(input$eics_iso)
+      mzrange <- EICs()$mzs[ind,]
       eics <- lapply(rawfiles, function(raw){
         getEIC(raw, c(input$rtleft, input$rtright), mzrange)
       })
@@ -221,7 +232,7 @@ runTarMet <- function(){
           p <- add_trace(p, x = eics[[f]]$rt, y = eics[[f]]$intensity, mode='line', name = paste('Sample: ',Names[f]))
           incProgress(0.1)
         }
-        p <- add_markers(p, x = eic$rt[c(peaks$Index$Start, peaks$Index$End)], y = eic$intensity[c(peaks$Index$Start, peaks$Index$End)], name = 'peak bound', color = I('blue'), marker = list(size = 5))
+        p <- add_markers(p, x = eic$rt[c(peaks$Index$Start, peaks$Index$End)], y = rep(0, 2*length(peaks$Index$End)), name = 'peak bound', color = I('blue'), marker = list(size = 5))
       })
       p
     })

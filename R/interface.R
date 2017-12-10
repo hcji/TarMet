@@ -20,7 +20,7 @@ runTarMet <- function(){
           
           h4('Metabolite Information'),
           textInput('formula', 'Input the targeted metabolite'),
-          numericInput('fmz', 'Input the m/z of the targeted metabolite (if the formula is unknow)', -1),
+          numericInput('fmz', 'Input the monoisotopic mass of the targeted metabolite (if the formula is unknow)', -1),
           selectInput('adduct', 'Select the type of adduct', choices = list(
             Positive = adducts$Name[adducts$Ion_mode == 'positive'],
             Negative = adducts$Name[adducts$Ion_mode == 'negative']
@@ -98,7 +98,7 @@ runTarMet <- function(){
 
     EICs <- reactive({
       raw <- raw()
-      eics <- getIsoEIC(raw, input$formula, input$fmz, input$nmax, adduct =input$adduct, ppm = input$ppm, rtrange = c(input$rtleft, input$rtright), threshold = input$threshold)
+      eics <- getIsoEIC(raw, input$formula, input$fmz, input$nmax, adduct = input$adduct, ppm = input$ppm, rtrange = c(input$rtleft, input$rtright), threshold = input$threshold)
       if (input$ifsmooth){
         eics$eics <- lapply(eics$eics, function(eic){
           eic$intensity <- eic$intensity - airPLS(eic$intensity)
@@ -153,7 +153,7 @@ runTarMet <- function(){
       colnames(PeakArea)[((ncol(PeakArea)-1) : ncol(PeakArea))] <- c('User Define', 'relative area (user)')
       
       if(input$fmz < 0){
-        pattern <- getIsoPat(formula, adduct, threshold = input$threshold)
+        pattern <- getIsoPat(input$formula, input$adduct, threshold = input$threshold)
         nmax <- min(input$nmax,round(max(pattern[,1] - pattern[1,1])))
         ints <- sapply(0:nmax, function(n){
           pai <- pattern[round(pattern[,1]- pattern[1,1])==n,]

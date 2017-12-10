@@ -46,12 +46,17 @@ getIsoPat <- function(formula, d, threshold){
   data("adducts", package = "enviPat")
   if (!is.numeric(d)){d <- which(d == adducts$Name)}
   checked <- check_chemform(isotopes, formula)
-  if (adduct > 0){
-    if (adducts[d, 7] != 'FALSE'){
-      chemform <- mergeform(checked[,2], adducts[d, 7])
+  if (d > 0){
+    if (as.numeric(adducts[d, 4]) == 2){
+      chemform <- mergeform(checked[,2], checked[,2])
+    } else if (as.numeric(adducts[d, 4]) == 3){
+      chemform <- mergeform(checked[,2], checked[,2], checked[,2])
     } else {
       chemform <- checked[, 2]
     }
+    if (adducts[d, 7] != 'FALSE'){
+      chemform <- mergeform(chemform, adducts[d, 7])
+    } 
     if (adducts[d, 8] != 'FALSE'){
       chemform <- subform(chemform, adducts[d, 8])
     }
@@ -73,14 +78,14 @@ getIsoEIC <- function(raw, formula, fmz, nmax = 3, adduct = 'M+H', ppm = 50, rtr
     })
   } else {
     data("adducts", package = "enviPat")
-    mzs <- (fmz + 0:nmax * 1.0033) / abs(adducts[adduct, 3])
+    mzs <- fmz + 0:nmax * 1.0033
   }
   
   mzranges <- do.call(rbind, lapply(mzs, function(mz){
     if (fmz > 0){
-      mz <- mz + adducts$Mass[adduct]
+      mz <- (mz * adducts$Mult[adduct] + adducts$Mass[adduct])
     }
-    c(mz * (1 - ppm/2/10^6), mz * (1 + ppm/2/10^6))
+    c(mz * (1 - ppm/2/10^6), mz * (1 + ppm/2/10^6)) / adducts$Charge[adduct]
   }))
   
   eics <- apply(mzranges, 1, function(mzrange){

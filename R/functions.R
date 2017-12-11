@@ -96,7 +96,11 @@ getIsoEIC <- function(raw, formula, fmz, nmax = 3, adduct = 'M+H', ppm = 50, rtr
 }
 
 getIsoPeaks <- function(eics, SNR.Th = 4, peakScaleRange = 5, peakThr = 0, userDefTime = NULL){
-  eic <- eics$eics[[1]]
+  ind <- which.max(sapply(eics$eics, function(s){
+    sum(s$intensity)
+  }))
+  eic <- eics$eics[[ind]]
+
   MajorPeaks <- peakDetectionCWT(eic$intensity, SNR.Th = SNR.Th, peakScaleRange = peakScaleRange, peakThr = peakThr)
   PeakWidths <- widthEstimationCWT(eic$intensity, MajorPeaks$majorPeakInfo)
   

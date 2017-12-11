@@ -33,7 +33,7 @@ runTarMet <- function(){
           h4('EIC Information'),
           numericInput('ppm', 'Input the tolerance of the m/z difference (ppm)', 100),
           uiOutput('rtControl'),
-          selectInput('ifsmooth', 'Select wether the EICs are smoothed or not', c(TRUE, FALSE)),
+          selectInput('ifsmooth', 'Select wether the baselines are removed or not', c(TRUE, FALSE)),
           
           h4('Peak Detection Information'),
           numericInput('SNR.Th', 'Input the minimum SNR of peaks', 5),
@@ -108,6 +108,14 @@ runTarMet <- function(){
       eics
     })
     
+    EIC <- reactive({
+      eics <- EICs()
+      ind <- which.max(sapply(eics$eics, function(s){
+        sum(s$intensity)
+      }))
+      eics$eics[[ind]]
+    })
+    
     Peaks <- reactive({
       eics <- EICs()
       getIsoPeaks(eics, input$SNR.Th, input$peakScaleRange, input$peakThr)
@@ -117,7 +125,7 @@ runTarMet <- function(){
       peaks <- Peaks()
       eics <- EICs()
       rt <- eics$eics[[1]]$rt
-      ind <- which.max(peaks$PeakArea$`Peak 1`)
+      ind <- which.max(peaks$PeakArea[1,-c(1,2)])
       
       tagList(
         numericInput('target_left', 'Define the target retention time: start',  peaks$PeakInfo$Start[ind] ),
@@ -128,7 +136,7 @@ runTarMet <- function(){
     output$EICPlot <- renderPlotly({
       eics <- EICs()
       peaks <- Peaks()
-      eic <- eics$eics[[1]]
+      eic <- EIC()
       withProgress(message = 'Creating plot', value = 0.1, {
         p <- plot_ly() %>%
           layout(xaxis = list(tick0 = 0, title = 'Retention Time (s)'),
@@ -185,9 +193,9 @@ runTarMet <- function(){
     })
     
     files_eics <- reactive({
-      eic <- EICs()$eics[[1]]
       rawfiles <- lapply(filepathes(), LoadData)
       ind <- as.numeric(input$eics_iso)
+      eic <- EICs()$eics[[ind]]
       mzrange <- EICs()$mzs[ind,]
       eics <- lapply(rawfiles, function(raw){
         getEIC(raw, c(input$rtleft, input$rtright), mzrange)

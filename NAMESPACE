@@ -1,1 +1,2 @@
-exportPattern("runTarMet")
+exportPattern("runTarMet", "LoadData", "getEIC", "getIsoPat", "getIsoEIC",
+"getIsoPeaks", "getArea", "airPLS", "integration", "PAFFT")

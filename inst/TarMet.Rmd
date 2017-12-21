@@ -2,7 +2,9 @@
 title: "TarMet"
 author: "Hongchao Ji"
 date: "2017/12/17"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -10,3 +12,21 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Introduction
+TarMet is a shiny application for targeted metabolic analyses based on mass spectrometry. TarMet can detect all of the isotopologues of target metabolites, and quantify the metabolites based on the peak areas automatically and efficiently.
+
+## Usage
+
+### Input
+
+#### Upload Raw Data
+TarMet uses *mzR* to parse raw data. The upload files can be *mzML*, *mzXML*, *mzData* or *CDF* format. Only one file can be upload in the isotope analysis step, while multiple files can be accepted in the quantitative analysis step.
+
+#### Metabolite Information
+The matabolite can be input as formulas or monoisotopic mass. If you choose to input a formula, please keep the monoisotopic mass input as *-1*, or the input formula is useless. You can select which kinds of adduct to be detected. Usually *M+H*, *M+Na* and *M+K* are common in positive mode, while *M-H* and *M+Cl* are common in negative mode.
+
+#### Isotopic Information
+Now, the only parameter is the threshold of relative abundance. Only peaks above the threshold are under consideration.
+
+#### EIC extraction
+
+

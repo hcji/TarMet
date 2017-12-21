@@ -18,7 +18,7 @@ TarMet is a shiny application for targeted metabolic analyses based on mass spec
 Download TarMet at [url](https://pan.baidu.com/s/1dEMfUF3) and install like a normal windows application.
 
 ## Usage:
-  A user guide is included in the package	
+  A [user guide] (https://github.com/hcji/TarMet/blob/master/inst/TarMet.pdf) is included in the package	
 
 ## Contact
   For any questions, please contact:  ji.hongchao@foxmail.com

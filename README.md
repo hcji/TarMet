@@ -1,4 +1,4 @@
-# TarMet
+# TarMet [![Build Status](https://www.travis-ci.org/hcji/TarMet.svg?branch=master)](https://www.travis-ci.org/hcji/TarMet)
 TarMet is a shiny application for targeted metabolic analyses based on mass spectrometry.
 
 ## Installation  

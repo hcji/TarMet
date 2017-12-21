@@ -1,2 +1,5 @@
 language: r
 cache: packages
+before_install:
+- sudo R -e "source("https://bioconductor.org/biocLite.R"); biocLite(c("MassSpecWavelet", "mzR"))"
+- sudo R -e "library(devtools); install_github("zmzhang/baselineWavelet")"

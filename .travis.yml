@@ -1,5 +1,7 @@
 language: r
+r: bioc-devel
 cache: packages
-r_github_packages: zmzhang/baselineWavelet
+bioc_packages: mzR
 bioc_packages: MassSpecWavelet
+r_github_packages: zmzhang/baselineWavelet
 warnings_are_errors: false

@@ -1,2 +1,3 @@
+import("mzR", "data.table", "enviPat", "Matrix", "shiny", "plotly", "MassSpecWavelet")
 exportPattern("runTarMet", "LoadData", "getEIC", "getIsoPat", "getIsoEIC",
 "getIsoPeaks", "getArea", "airPLS", "integration", "PAFFT")

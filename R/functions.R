@@ -1,6 +1,5 @@
 LoadData <- function(filename)
 {
-  library(mzR)
   splitname <- strsplit(filename,"\\.")[[1]]
   if(tolower(splitname[length(splitname)]) == "cdf")
   {
@@ -100,9 +99,10 @@ getIsoPeaks <- function(eics, SNR.Th = 4, peakScaleRange = 5, peakThr = 0, userD
     sum(s$intensity)
   }))
   eic <- eics$eics[[ind]]
-
+  if (sum(eic$intensity)==0) return(NULL)
   MajorPeaks <- peakDetectionCWT(eic$intensity, SNR.Th = SNR.Th, peakScaleRange = peakScaleRange, peakThr = peakThr)
-  PeakWidths <- widthEstimationCWT(eic$intensity, MajorPeaks$majorPeakInfo)
+  if (length((MajorPeaks$majorPeakInfo$peakIndex)) < 1) {return(NULL)}
+  PeakWidths <- baselineWavelet::widthEstimationCWT(eic$intensity, MajorPeaks$majorPeakInfo)
   
   Position <- MajorPeaks$majorPeakInfo$peakIndex
   Start <- sapply(2:length(PeakWidths), function(s){
@@ -145,7 +145,7 @@ airPLS <- function(x,lambda=10,differences=1, itermax=20){
   control = 1
   i = 1
   while(control==1){
-    z = WhittakerSmooth(x,w,lambda,differences)
+    z = baselineWavelet::WhittakerSmooth(x,w,lambda,differences)
     d = x-z
     sum_smaller = abs(sum(d[d<0])) 
     if(sum_smaller<0.001*sum(abs(x))||i==itermax)

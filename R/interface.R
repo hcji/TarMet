@@ -1,12 +1,5 @@
 runTarMet <- function(){
-  library(shiny)
-  library(plotly)
-  library(enviPat)
-  library(MassSpecWavelet)
-  library(baselineWavelet)
-  library(data.table)
-  library(Matrix)
-  
+
   data("isotopes", package = "enviPat")
   data("adducts", package = "enviPat")
   
@@ -101,7 +94,7 @@ runTarMet <- function(){
       eics <- getIsoEIC(raw, input$formula, input$fmz, input$nmax, adduct = input$adduct, ppm = input$ppm, rtrange = c(input$rtleft, input$rtright), threshold = input$threshold)
       if (input$ifsmooth){
         eics$eics <- lapply(eics$eics, function(eic){
-          eic$intensity <- eic$intensity - airPLS(eic$intensity)
+          if (sum(eic$intensity) > 0) {eic$intensity <- eic$intensity - airPLS(eic$intensity)}
           eic
         })
       }
@@ -146,8 +139,10 @@ runTarMet <- function(){
           p <- add_trace(p, x = eics$eics[[f]]$rt, y = eics$eics[[f]]$intensity, mode='line', name = paste('Mz: ',round(eics$mzs[f,1],4), ' - ', round(eics$mzs[f,2],4)))
           incProgress(0.1)
         }
-        p <- add_markers(p, x = eic$rt[peaks$Index$Position], y = eic$intensity[peaks$Index$Position], name = 'peak position', color = I('red'), marker = list(size = 5))
-        p <- add_markers(p, x = eic$rt[c(peaks$Index$Start, peaks$Index$End)], y = eic$intensity[c(peaks$Index$Start, peaks$Index$End)], name = 'peak bound', color = I('blue'), marker = list(size = 5))
+        if (!is.null(peaks)){
+          p <- add_markers(p, x = eic$rt[peaks$Index$Position], y = eic$intensity[peaks$Index$Position], name = 'peak position', color = I('red'), marker = list(size = 5))
+          p <- add_markers(p, x = eic$rt[c(peaks$Index$Start, peaks$Index$End)], y = eic$intensity[c(peaks$Index$Start, peaks$Index$End)], name = 'peak bound', color = I('blue'), marker = list(size = 5))
+        }
       })
       p
     })

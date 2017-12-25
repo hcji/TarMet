@@ -9,7 +9,6 @@ TarMet is a shiny application for targeted metabolic analyses based on mass spec
 	source("https://bioconductor.org/biocLite.R")
     biocLite(c("MassSpecWavelet", "mzR"))
 	library(devtools)
-	httr::set_config( httr::config( ssl_verifypeer = 0L ) )
 	install_github("zmzhang/baselineWavelet")
 
 	install_github("hcji/TarMet")

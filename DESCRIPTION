@@ -7,5 +7,4 @@ Author: Hongchao Ji
 Maintainer: Hongchao Ji <ji.hongchao@foxmail.com>
 Description: Targeted Metabolic and Stable Isotope Tracer.
 License: MIT
-Imports: data.table (>= 1.10.4.3), enviPat (>= 2.2), Matrix (>= 1.2-11), shiny (>= 1.0.5), plotly (>= 4.7.1)
-Remotes: bioc::3.5/MassSpecWavelet, zmzhang/baselineWavelet
+Imports: data.table, enviPat, Matrix, shiny, plotly, MassSpecWavelet, baselineWavelet

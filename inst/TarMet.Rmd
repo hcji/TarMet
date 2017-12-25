@@ -16,7 +16,7 @@ TarMet is a shiny application for targeted metabolic analyses based on mass spec
 
 ## Usage
 
-### Input
+### Isotopic Analysis
 
 #### Upload Raw Data
 TarMet uses *mzR* to parse raw data. The upload files can be *mzML*, *mzXML*, *mzData* or *CDF* format. Only one file can be upload in the isotope analysis step, while multiple files can be accepted in the quantitative analysis step.
@@ -25,8 +25,31 @@ TarMet uses *mzR* to parse raw data. The upload files can be *mzML*, *mzXML*, *m
 The matabolite can be input as formulas or monoisotopic mass. If you choose to input a formula, please keep the monoisotopic mass input as *-1*, or the input formula is useless. You can select which kinds of adduct to be detected. Usually *M+H*, *M+Na* and *M+K* are common in positive mode, while *M-H* and *M+Cl* are common in negative mode.
 
 #### Isotopic Information
-Now, the only parameter is the threshold of relative abundance. Only peaks above the threshold are under consideration.
+The only parameter is the threshold of relative abundance. Only peaks above the threshold are under consideration.
 
-#### EIC extraction
+#### EIC Extraction
+The extraction ion chromatograms are obtained by sum the data points within a specific m/z tolerance, given as ppm. You can also choose to remove the baseline via airPLS algorithm.
+
+#### Peak Detection
+The peak detection is based on *MassSpecWavelet* package. Three parameters should be given, which are the minimum snrs, minimum scales of peaks and minimum intensities of peaks.
+
+#### EIC Plot
+The EIC Plot will contain the EICs obatined based on the input, as well as the detected peaks and the bounds of peaks. If there is no peaks in the given m/z range, it will show nothing, please adjust your input.
+
+#### Peak Information
+This table will shows the information of obtained peaks based on the input, including m/z, peak range, peak area, etc.
+
+
+### Quantitative Analysis
+
+#### Upload Raw Data
+In this step, you can upload multiple data files. The target metabolite will be extracted from all of the input data files. The information used is the same as the last step. 
+
+#### Alignment
+Usually, retention time of the same metabolite may differs between different samples. You can choose whether to correct the time shift. 
+
+#### Isotope Information
+Choose which isotopologue is used for quantitative analysis. It is the index of the peaks in the peak information table.
+
 
 

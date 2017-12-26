@@ -1,7 +1,7 @@
 Package: TarMet
 Type: Package
 Title: Targeted Metabolic and Stable Isotope Tracer.
-Version: 1.0
+Version: 0.99.0
 Date: 2017-11-10
 Author: Hongchao Ji
 Maintainer: Hongchao Ji <ji.hongchao@foxmail.com>

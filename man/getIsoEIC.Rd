@@ -19,7 +19,7 @@ Result obtain by \code{LoadData}
 A chemical formula or \code{NULL}
 }
   \item{fmz}{
-The m/z of targetted compound. if the formula is given, please set as -1.
+The m/z of targeted compound. if the formula is given, please set as -1.
 }
   \item{nmax}{
 n, where at maximum M+n isotopes are count.
@@ -31,7 +31,7 @@ The species of adduct.
 m/z range of EIC, given as ppm.
 }
   \item{rtrange}{
-Rt raneg of EIC.
+Rt range of EIC.
 }
   \item{threshold}{
 The relative intensity threshold of isotope, from 0 to 1.

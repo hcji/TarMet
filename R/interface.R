@@ -219,7 +219,7 @@ runTarMet <- function(){
     output$EICPlots <- renderPlotly({
       eics <- files_eics()
       peaks <- Peaks()
-      Names <- sapply(filepathes(), function(f){
+      Names <- sapply(input$files$name, function(f){
         Name <- strsplit(f,'/')[[1]]
         Name[length(Name)]
       })
@@ -232,7 +232,7 @@ runTarMet <- function(){
                  yaxis = list(title = 'Intensity'))
         incProgress(0.1)
         for (f in 1: length(eics)) {
-          p <- add_trace(p, x = eics[[f]]$rt, y = eics[[f]]$intensity, mode='line', name = paste('Sample: ',Names[f]))
+          p <- add_trace(p, x = eics[[f]]$rt, y = eics[[f]]$intensity, mode='line', name = paste(Names[f]))
           incProgress(0.1)
         }
         p <- add_markers(p, x = eic$rt[c(peaks$Index$Start, peaks$Index$End)], y = rep(0, 2*length(peaks$Index$End)), name = 'peak bound', color = I('blue'), marker = list(size = 5))
@@ -243,7 +243,7 @@ runTarMet <- function(){
     output$files_peaks <- renderTable({
       files_eics <- files_eics()
       rt <- EICs()$eics[[1]]$rt
-      Names <- sapply(filepathes(), function(f){
+      Names <- sapply(input$files$name, function(f){
         Name <- strsplit(f,'/')[[1]]
         Name[length(Name)]
       })
@@ -251,7 +251,10 @@ runTarMet <- function(){
         eics <- list(rt=rt, eics=list(eics))
         getArea(eics, input$target_left, input$target_right)
       })
-      data.frame(Names, Areas)
+      Areas <- round(Areas, 3)
+      res <- cbind(Names, Areas)
+      colnames(res) <- c('Names', paste('Area (M+', as.numeric(input$eics_iso)-1, ')', sep='')) 
+      res
     })
     
   }

@@ -273,3 +273,4 @@ findMin <- function(samseg,refseg){
   return(minpos)
 }
 # End PAFFT
+

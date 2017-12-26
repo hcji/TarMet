@@ -12,6 +12,7 @@ TarMet is a shiny application for targeted metabolic analyses based on mass spec
 	install_github("zmzhang/baselineWavelet")
 
 	install_github("hcji/TarMet")
+	runTarMet()
 	
 ### Not R users
 Download TarMet at [url](https://www.researchgate.net/profile/Hongchao_Ji/publication/322061960_Setup_file_of_TarMet_software/data/5a41a79f0f7e9ba868a19a58/setup-TarMet.7z) and install like a normal windows application.

@@ -1,6 +1,10 @@
 language: r
 cache: packages
-bioc_packages: mzR
-bioc_packages: MassSpecWavelet
+before_install:
+ - sudo sed -i -e '$adeb http://cran.univ-paris1.fr/bin/linux/ubuntu trusty/' /etc/apt/sources.list
+ - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
+ - sudo apt-get update
+ - sudo apt-get install -y r-base
+ - sudo R -e "install.packages(c('tidyr', 'devtools', 'data.table', 'enviPat', 'Matrix', 'shiny', 'plotly'), lib='/usr/lib/R/library', dependencies = TRUE)"
+ - sudo R -e "source('https://bioconductor.org/biocLite.R'); biocLite(c('MassSpecWavelet', 'mzR'))"
 r_github_packages: zmzhang/baselineWavelet
-warnings_are_errors: false

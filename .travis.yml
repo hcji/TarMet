@@ -1,0 +1,6 @@
+language: r
+cache: packages
+bioc_packages: mzR
+bioc_packages: MassSpecWavelet
+r_github_packages: zmzhang/baselineWavelet
+warnings_are_errors: false

@@ -5,7 +5,7 @@ TarMet is a shiny application for targeted metabolic analyses based on mass spec
 
 ### R users:
 
-	install.packages(c("devtools", "data.table", "enviPat", "Matrix", "shiny", "plotly"))
+	install.packages(c("tidyr", "devtools", "data.table", "enviPat", "Matrix", "shiny", "plotly"))
 	source("https://bioconductor.org/biocLite.R")
     biocLite(c("MassSpecWavelet", "mzR"))
 	library(devtools)

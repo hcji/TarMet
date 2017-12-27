@@ -19,7 +19,7 @@ Download TarMet at [url](https://www.researchgate.net/profile/Hongchao_Ji/public
 Note, it may take several minutes to install packages when starts for the first time.
 
 ## Usage:
-  A [user guide](https://github.com/hcji/TarMet/blob/master/inst/TarMet.pdf) is included in the package	
+  A [user guide](https://github.com/hcji/TarMet/blob/master/inst/doc/TarMet.pdf) is included in the package	
 
 ## Contact
   For any questions, please contact:  ji.hongchao@foxmail.com

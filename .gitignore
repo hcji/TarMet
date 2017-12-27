@@ -4,4 +4,5 @@
 .Ruserdata
 .mzxml
 .Rproj
-.mzxml
+packrat/lib*/
+packrat/src/

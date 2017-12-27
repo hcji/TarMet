@@ -1,3 +1,9 @@
+runTarMet <- function(){
+  appdir <- system.file('app', package = 'TarMet')
+  runApp(appdir, display.mode = 'normal')
+}
+
+
 LoadData <- function(filename)
 {
   splitname <- strsplit(filename,"\\.")[[1]]

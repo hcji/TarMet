@@ -51,5 +51,48 @@ Usually, retention time of the same metabolite may differs between different sam
 #### Isotope Information
 Choose which isotopologue is used for quantitative analysis. It is the index of the peaks in the peak information table.
 
+## Functions
+
+Actually, for the end user, all of the functions can be used in the shiny app. Here is some funtions invoked in the app. The MM14 dataset is used for an example, which can be download at **https://www.ebi.ac.uk/metabolights/MTBLS188**
+
+```{r, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+# Load Dataset
+library(TarMet)
+files <- list.files('E:/MM48', full.names = TRUE)
+files
+
+file1 <- files[1]
+raw <- LoadData(file1)
+
+# Get EICs from raw data directly
+eic <- getEIC(raw, rtrange = c(0, Inf), mzrange = c(288.05, 288.10))
+plot(eic$rt, eic$intensity, 'l')
+
+# But usually we usually get the isotopic EICs of a specific formula at the same time.
+eics <- getIsoEIC(raw, formula = 'C16H12O5', fmz= -1) # keep fmz=-1 when you give a formula
+# The isotopic pattern is obtained by the function of 
+pattern <- getIsoPat('C16H12O5', 'M+H', 0.2)
+pattern
+
+# Then we can detect peak from the EICs, and get the peak areas.
+peaks <- getIsoPeaks(eics, SNR.Th = 4, peakScaleRange = 5)
+# The user can also define the start and the end of a peak manually, and the area is calculated by:
+areas <- getArea(eics, rtmin = 0, rtmax = Inf)
+# The method of calculating the area is by trapezoidal integration, for example:
+res <- integration(x = 1:20,yf = 20:1)
+
+# If more than one example is processed, TarMet uses a alignment method to correct the time shift of EICs:
+
+# get eics from a set of samples:
+rawfiles <- lapply(files, LoadData)
+eics <- lapply(rawfiles, function(raw){
+  getEIC(raw, c(0, Inf), c(288.05, 288.10))
+})
+# correct the time shift between sample 1 and sample 2 (for example)
+spectra <- t(eics[[1]]$intensity)
+reference <- t(eics[[2]]$intensity)
+res <- PAFFT(spectra, reference, segSize = 150, shift = 50)
+
+```
 
 

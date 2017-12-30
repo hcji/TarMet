@@ -53,24 +53,25 @@ Choose which isotopologue is used for quantitative analysis. It is the index of 
 
 ## Functions
 
-Actually, for the end user, all of the functions can be used in the shiny app. Here is some funtions invoked in the app. The MM14 dataset is used for an example, which can be download at **https://www.ebi.ac.uk/metabolights/MTBLS188**
+Actually, for the end user, all of the functions can be used in the shiny app. Here is some funtions invoked in the app. The MTBLS2 dataset is used for an example.
 
 ```{r, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
 # Load Dataset
 library(TarMet)
-files <- list.files('E:/MM48', full.names = TRUE)
-files
+library(mtbls2)
+filepath <- file.path(find.package("mtbls2"), "mzData")
+files <- file.path(filepath, list.files(filepath, recursive = TRUE))[1:3]
 
 file1 <- files[1]
 raw <- LoadData(file1)
 
 # Get EICs from raw data directly
-eic <- getEIC(raw, rtrange = c(0, Inf), mzrange = c(288.05, 288.10))
+eic <- getEIC(raw, rtrange = c(0, Inf), mzrange = c(201.03, 201.05))
 plot(eic$rt, eic$intensity, 'l')
 
 # But usually we usually get the isotopic EICs of a specific formula at the same time.
-eics <- getIsoEIC(raw, formula = 'C16H12O5', fmz= -1) # keep fmz=-1 when you give a formula
-# The isotopic pattern is obtained by the function of 
+eics <- getIsoEIC(raw, formula = NULL, fmz= 200.04, adduct = "M+H") # or you can give the formula, if so, please keep fmz=-1 i you give a formula.
+# If the formula is given, the isotopic pattern is obtained by the function of 
 pattern <- getIsoPat('C16H12O5', 'M+H', 0.2)
 pattern
 
@@ -86,7 +87,7 @@ res <- integration(x = 1:20,yf = 20:1)
 # get eics from a set of samples:
 rawfiles <- lapply(files, LoadData)
 eics <- lapply(rawfiles, function(raw){
-  getEIC(raw, c(0, Inf), c(288.05, 288.10))
+  getEIC(raw, c(0, Inf), mzrange = c(201.03, 201.05))
 })
 # correct the time shift between sample 1 and sample 2 (for example)
 spectra <- t(eics[[1]]$intensity)

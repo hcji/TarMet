@@ -1,14 +1,9 @@
 data("isotopes", package = "enviPat")
 data("adducts", package = "enviPat")
 
-function(input, output, session){
+function(input, output){
   options(shiny.maxRequestSize=1024^4)
-  
-  session$onSessionEnded(function() {
-    stopApp()
-    q("no")
-  })
-  
+
   raw <- reactive({
     req(input$file)
     LoadData(input$file$datapath)

@@ -280,3 +280,144 @@ findMin <- function(samseg,refseg){
 }
 # End PAFFT
 
+# clone from baselineWavelet
+
+cwt <- function(ms, scales=1, wavelet='mexh') {
+  if (wavelet == 'mexh') {
+    psi_xval <- seq(-8, 8, length=1024)
+    psi <- (2/sqrt(3) * pi^(-0.25)) * (1 - psi_xval^2) *exp(-psi_xval^2/2)
+    #plot(psi_xval, psi)
+  } else if (wavelet=='haar') {
+    psi_xval <- seq(0,1,length=1024)
+    psi <- c(0,rep(1,511),rep(-1,511),0)
+  }else if (is.matrix(wavelet)) {
+    if (nrow(wavelet) == 2) {
+      psi_xval <- wavelet[1,]
+      psi <- wavelet[2,]
+    } else if (ncol(wavelet) == 2) {
+      psi_xval <- wavelet[,1]
+      psi <- wavelet[,2]
+    } else {
+      stop('Unsupported wavelet format!')
+    }
+  } else {
+    stop('Unsupported wavelet!')
+  }
+  
+  oldLen <- length(ms)
+  ms <- extendNBase(ms, nLevel=NULL, base=2)
+  len <- length(ms)
+  nbscales <- length(scales)
+  wCoefs <- NULL
+  
+  psi_xval <- psi_xval - psi_xval[1]
+  dxval <- psi_xval[2]
+  xmax  <- psi_xval[length(psi_xval)]
+  for (i in 1:length(scales)) {
+    scale.i <- scales[i]
+    f <- rep(0, len)
+    j <- 1 + floor((0:(scale.i * xmax))/(scale.i * dxval))
+    if (length(j) == 1)		j <- c(1, 1)
+    lenWave <- length(j)
+    f[1:lenWave] <- rev(psi[j]) - mean(psi[j])
+    if (length(f) > len) stop(paste('scale', scale.i, 'is too large!'))
+    wCoefs.i <- 1/sqrt(scale.i) * convolve(ms, f)
+    ## Shift the position with half wavelet width
+    wCoefs.i <- c(wCoefs.i[(len-floor(lenWave/2) + 1) : len], wCoefs.i[1:(len-floor(lenWave/2))])
+    wCoefs <- cbind(wCoefs, wCoefs.i)
+  }
+  if (length(scales) == 1) wCoefs <- matrix(wCoefs, ncol=1)
+  colnames(wCoefs) <- scales
+  wCoefs <- wCoefs[1:oldLen,,drop=FALSE]
+  return(wCoefs)
+}
+
+WhittakerSmooth <- function(x,w,lambda,differences=1) {
+  x=as.vector(x)
+  L=length(x)
+  E=spMatrix(L,L,i=seq(1,L),j=seq(1,L),rep(1,L))
+  D=as(diff(E,1,differences),"dgCMatrix")
+  W=as(spMatrix(L,L,i=seq(1,L),j=seq(1,L),w),"dgCMatrix")
+  background=solve((W+lambda*t(D)%*%D),w*x);
+  return(as.vector(background))
+}
+
+widthEstimationCWT <- function(x,majorPeakInfo) {
+  
+  wCoefs_haar <- cwt(x, 1:max(majorPeakInfo$peakScale), wavelet='haar')
+  peakIndex <- majorPeakInfo$peakIndex
+  peakScale <- majorPeakInfo$peakScale[findInterval(majorPeakInfo$peakIndex,majorPeakInfo$allPeakIndex)]
+  
+  peakWidth <- list()
+  peakWidth[["peakIndex"]]= majorPeakInfo$peakIndex
+  
+  for(i in 1:length(peakIndex)){
+    peakIndex.i=peakIndex[i]
+    peakScale.i=peakScale[i]
+    wCoefs_haar.i=wCoefs_haar[,peakScale.i]
+    wCoefs_haar.i.abs=abs(wCoefs_haar.i)
+    localmax=localMaximum(-wCoefs_haar.i.abs,winSize=5)      
+    #    localmax=localmax & abs(wCoefs_haar.i)<(mean(wCoefs_haar.i.abs[localmax==1])+0.5*sd(wCoefs_haar.i.abs[localmax==1]))
+    localmax=as.numeric(localmax)
+    localmax[peakIndex]=0
+    localmax[(peakIndex.i-peakScale.i/2+1):(peakIndex.i+peakScale.i/2-1)]=0
+    
+    Lef =0
+    Rig =0
+    
+    peakScale.i.3=2*peakScale.i
+    
+    
+    if(i==1){
+      maxIndexL=max(c((peakIndex.i-peakScale.i.3),1))
+    }else{
+      maxIndexL=max(c((peakIndex.i-peakScale.i.3),peakIndex[i-1]))
+    }
+    
+    if(i==length(peakIndex)){
+      minIndexR=min(c((peakIndex.i+peakScale.i.3),length(localmax)))
+    } else{
+      minIndexR=min(c((peakIndex.i+peakScale.i.3),peakIndex[i+1]))
+    }
+    ignoreL=1:maxIndexL
+    ignoreR=minIndexR:length(localmax)        
+    localmax[c(ignoreL,ignoreR)]=0
+    localmax[c(peakIndex.i,(peakIndex.i-(peakScale.i/2)):(peakIndex.i+(peakScale.i/2)))]=0
+    bi=which(localmax==1)
+    
+    biLeft=bi[bi<peakIndex.i]
+    useL= maxIndexL:peakIndex.i
+    minIndexLeft=useL[which(min(x[useL])==x[useL])]
+    
+    if(length(biLeft)==0){
+      Lef=minIndexLeft
+    }else{
+      minbaselineIndexLeft=biLeft[which(min(x[biLeft])==x[biLeft])]
+      if(minIndexLeft>=(peakIndex.i-peakScale.i/2+1)){
+        Lef=minbaselineIndexLeft
+      }else{
+        Lef=max(c(minIndexLeft,minbaselineIndexLeft))
+      }   
+    }
+    
+    biRight=bi[bi>peakIndex.i]
+    useR= peakIndex.i:minIndexR
+    minIndexRight=useR[which(min(x[useR])==x[useR])]
+    
+    if(length(biRight)==0){
+      Rig= minIndexRight
+    }else{
+      minbaselineIndexRight=biRight[which(min(x[biRight])==x[biRight])] 
+      if(minIndexRight<=(peakIndex.i+peakScale.i/2-1)){
+        Rig=minbaselineIndexRight
+      }else{
+        Rig=min(c(minIndexRight,minbaselineIndexRight))
+      }      
+    }
+    
+    peakWidth[[paste(peakIndex.i)]]=Lef:Rig
+    
+  }
+  
+  return(peakWidth)		
+}

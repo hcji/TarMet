@@ -12,3 +12,8 @@ runTarMet()
 \value{
 A shiny app
 }
+
+\examples{
+# not run
+# runTarMet()
+}

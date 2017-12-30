@@ -2,14 +2,17 @@
 title: "TarMet"
 author: "Hongchao Ji"
 date: "2017/12/17"
+package: TarMet
 output:
-  pdf_document: default
-  html_document: default
+  BiocStyle::html_document:
+    toc_float: true
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Targeted metabolic analyses based on mass spectrometry}
+  %\VignetteKeywords{mass spectrometry, metabolomics}
+  %\VignetteEncoding{UTF-8}
+  %\VignettePackage{TarMet}
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 ## Introduction
 TarMet is a shiny application for targeted metabolic analyses based on mass spectrometry. TarMet can detect all of the isotopologues of target metabolites, and quantify the metabolites based on the peak areas automatically and efficiently.

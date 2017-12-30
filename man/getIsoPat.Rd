@@ -22,3 +22,7 @@ The species of adduct
 The relative intensity threshold, from 0 to 1.
 }
 }
+
+\examples{
+pattern <- getIsoPat('C16H12O5', 'M+H', 0.2)
+}

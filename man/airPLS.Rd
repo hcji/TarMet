@@ -15,3 +15,7 @@ airPLS(x, lambda = 10, differences = 1, itermax = 20)
   \item{differences}{ an integer indicating the order of the difference of penalties}
   \item{itermax}{maximum iterations}
 }
+\examples{
+data(exampleMS, package = 'MassSpecWavelet')
+airPLS(exampleMS)
+}

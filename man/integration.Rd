@@ -13,3 +13,8 @@ integration(x,yf)
   \item{x}{The values of x-axis}
   \item{yf}{The yf is a collection of each fitting peaks.}
 }
+
+\examples{
+data(exampleMS, package = 'MassSpecWavelet')
+integration(1:length(exampleMS), exampleMS)
+}

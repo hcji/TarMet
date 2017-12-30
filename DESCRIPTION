@@ -1,7 +1,7 @@
 Package: TarMet
 Type: Package
 Title: Targeted Metabolic and Stable Isotope Tracer.
-Version: 0.99.2
+Version: 0.99.3
 Date: 2017-11-10
 Author: Hongchao Ji
 Maintainer: Hongchao Ji <ji.hongchao@foxmail.com>
@@ -9,5 +9,5 @@ Description: Targeted Metabolic and Stable Isotope Tracer.
 License: GPL (> 2.0)
 Depends: tidyr, mzR, data.table, enviPat, Matrix, shiny, plotly, MassSpecWavelet
 Suggests: knitr
-VignetteBuilder: knitr
+VignetteBuilder: knitr, BiocStyle
 biocViews: Metabolomics, MassSpectrometry

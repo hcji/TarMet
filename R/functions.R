@@ -221,7 +221,7 @@ FFTcorr <- function(spectrum, target, shift){
   Y <- fft(as.numeric(spectrum))
   R <- X*Conj(Y)
   R <- R/M
-  rev <- fft(R,inverse=T)/length(rev)
+  rev <- fft(R,inverse=TRUE)/length(rev)
   vals <- Re(rev)
   maxpos <- 1
   maxi <- -1

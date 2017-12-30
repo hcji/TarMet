@@ -16,11 +16,9 @@ LoadData(filename)
 }
 }
 \examples{
-# not run
-
-# library(mtbls2)
-# filepath <- file.path(find.package("mtbls2"), "mzData")
-# files <- file.path(filepath, list.files(filepath, recursive = TRUE))[1:3]
-# file1 <- files[1]
-# raw <- LoadData(file1)
+library(mtbls2)
+filepath <- file.path(find.package("mtbls2"), "mzData")
+files <- file.path(filepath, list.files(filepath, recursive = TRUE))[1:3]
+file1 <- files[1]
+raw <- LoadData(file1)
 }

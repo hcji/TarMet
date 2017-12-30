@@ -25,3 +25,10 @@ The size of segment.
 Maxmimum shift.
 }
 }
+
+\examples{
+data(exampleMS, package = 'MassSpecWavelet')
+spectra = t(c(exampleMS, rep(0,50)))
+reference = t(c(rep(0,50), exampleMS))
+res = PAFFT(spectra, reference, 1000, 100)
+}

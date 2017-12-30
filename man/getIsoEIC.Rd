@@ -39,14 +39,12 @@ The relative intensity threshold of isotope, from 0 to 1.
 }
 
 \examples{
-# not run
+library(mtbls2)
+filepath <- file.path(find.package("mtbls2"), "mzData")
+files <- file.path(filepath, list.files(filepath, recursive = TRUE))[1:3]
+file1 <- files[1]
+raw <- LoadData(file1)
 
-# library(mtbls2)
-# filepath <- file.path(find.package("mtbls2"), "mzData")
-# files <- file.path(filepath, list.files(filepath, recursive = TRUE))[1:3]
-# file1 <- files[1]
-# raw <- LoadData(file1)
-
-# eics <- getIsoEIC(raw, formula = NULL, fmz= 200.04, adduct = "M+H")
-# eics <- getIsoEIC(raw, formula = 'C16H12O5', -1, adduct = "M+H")
+eics <- getIsoEIC(raw, formula = NULL, fmz= 200.04, adduct = "M+H")
+eics <- getIsoEIC(raw, formula = 'C16H12O5', -1, adduct = "M+H")
 }

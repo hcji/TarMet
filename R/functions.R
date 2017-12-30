@@ -108,7 +108,7 @@ getIsoPeaks <- function(eics, SNR.Th = 4, peakScaleRange = 5, peakThr = 0, userD
   if (sum(eic$intensity)==0) return(NULL)
   MajorPeaks <- peakDetectionCWT(eic$intensity, SNR.Th = SNR.Th, peakScaleRange = peakScaleRange, peakThr = peakThr)
   if (length((MajorPeaks$majorPeakInfo$peakIndex)) < 1) {return(NULL)}
-  PeakWidths <- baselineWavelet::widthEstimationCWT(eic$intensity, MajorPeaks$majorPeakInfo)
+  PeakWidths <- widthEstimationCWT(eic$intensity, MajorPeaks$majorPeakInfo)
   
   Position <- MajorPeaks$majorPeakInfo$peakIndex
   Start <- sapply(2:length(PeakWidths), function(s){
@@ -151,7 +151,7 @@ airPLS <- function(x,lambda=10,differences=1, itermax=20){
   control = 1
   i = 1
   while(control==1){
-    z = baselineWavelet::WhittakerSmooth(x,w,lambda,differences)
+    z = WhittakerSmooth(x,w,lambda,differences)
     d = x-z
     sum_smaller = abs(sum(d[d<0])) 
     if(sum_smaller<0.001*sum(abs(x))||i==itermax)
@@ -421,3 +421,56 @@ widthEstimationCWT <- function(x,majorPeakInfo) {
   
   return(peakWidth)		
 }
+
+extendNBase <-  function(x, nLevel=1, base=2, ...) {
+  if (!is.matrix(x)) x <- matrix(x, ncol=1)	
+  
+  nR <- nrow(x)
+  if (is.null(nLevel)) {
+    nR1 <- nextn(nR, base)		
+  } else {
+    nR1 <- ceiling(nR / base^nLevel) * base^nLevel		
+  }
+  if (nR != nR1) {
+    x <- extendLength(x, addLength=nR1-nR, ...)
+  }
+  
+  return(x)
+}
+
+extendLength <- function(x, addLength=NULL, method=c('reflection', 'open', 'circular'), direction=c('right', 'left', 'both')) {
+  if (is.null(addLength)) stop('Please provide the length to be added!')
+  if (!is.matrix(x)) x <- matrix(x, ncol=1)	
+  method <- match.arg(method)
+  direction <- match.arg(direction)
+  
+  nR <- nrow(x)
+  nR1 <- nR + addLength
+  if (direction == 'both') {
+    left <- right <- addLength
+  } else if (direction == 'right') {
+    left <- 0
+    right <- addLength
+  } else if (direction == 'left') {
+    left <- addLength
+    right <- 0
+  }
+  
+  if (right > 0) {
+    x <- switch(method,
+                reflection =rbind(x, x[nR:(2 * nR - nR1 + 1), , drop=FALSE]),
+                open = rbind(x, matrix(rep(x[nR,], addLength), ncol=ncol(x), byrow=TRUE)),
+                circular = rbind(x, x[1:(nR1 - nR),, drop=FALSE]))
+  }
+  
+  if (left > 0) {
+    x <- switch(method,
+                reflection =rbind(x[addLength:1, , drop=FALSE], x),
+                open = rbind(matrix(rep(x[1,], addLength), ncol=ncol(x), byrow=TRUE), x),
+                circular = rbind(x[(2 * nR - nR1 + 1):nR,, drop=FALSE], x))
+  }
+  if (ncol(x) == 1)  x <- as.vector(x)
+  
+  return(x)
+}
+

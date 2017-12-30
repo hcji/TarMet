@@ -8,3 +8,6 @@ Maintainer: Hongchao Ji <ji.hongchao@foxmail.com>
 Description: Targeted Metabolic and Stable Isotope Tracer.
 License: GPL (> 2.0)
 Depends: tidyr, mzR, data.table, enviPat, Matrix, shiny, plotly, MassSpecWavelet
+Suggests: knitr
+VignetteBuilder: knitr
+biocViews: Metabolomics, MassSpectrometry

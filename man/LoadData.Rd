@@ -15,6 +15,11 @@ LoadData(filename)
   \item{filename}{The path of LC-MS data
 }
 }
+
+\value{
+  the raw data information.
+}
+
 \examples{
 library(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")

@@ -14,6 +14,10 @@ integration(x,yf)
   \item{yf}{The yf is a collection of each fitting peaks.}
 }
 
+\value{
+  the peak area obtained by integration.
+}
+
 \examples{
 data(exampleMS, package = 'MassSpecWavelet')
 integration(1:length(exampleMS), exampleMS)

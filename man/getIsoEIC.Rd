@@ -38,6 +38,10 @@ The relative intensity threshold of isotope, from 0 to 1.
 }
 }
 
+\value{
+  A list of EICs of isotopic features.
+}
+
 \examples{
 library(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")

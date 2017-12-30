@@ -23,6 +23,10 @@ Range of m/z
 }
 }
 
+\value{
+  the EIC lists.
+}
+
 \examples{
 library(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")

@@ -29,6 +29,10 @@ User defined retention time ranges of a select peak.
 }
 }
 
+\value{
+  the peak information of isotopic peaks.
+}
+
 \examples{
 library(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")

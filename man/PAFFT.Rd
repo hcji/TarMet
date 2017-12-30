@@ -26,6 +26,10 @@ Maxmimum shift.
 }
 }
 
+\value{
+  the aligned result.
+}
+
 \examples{
 data(exampleMS, package = 'MassSpecWavelet')
 spectra = t(c(exampleMS, rep(0,50)))

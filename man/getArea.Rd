@@ -22,3 +22,18 @@ Start of retention time.
 End of retention time.
 }
 }
+
+\value{
+  the peak areas.
+}
+
+\examples{
+library(mtbls2)
+filepath <- file.path(find.package("mtbls2"), "mzData")
+files <- file.path(filepath, list.files(filepath, recursive = TRUE))[1:3]
+file1 <- files[1]
+raw <- LoadData(file1)
+eics <- getIsoEIC(raw, formula = NULL, fmz= 200.04, adduct = "M+H")
+
+areas <- getArea(eics, rtmin = 0, rtmax = Inf)
+}

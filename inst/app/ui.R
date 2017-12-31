@@ -19,12 +19,8 @@ navbarPage(
         fileInput('file', 'Choose one of your raw data files'),
         
         h4('Metabolite Information'),
-        textInput('formula', 'Input the targeted metabolite'),
-        numericInput('fmz', 'Input the monoisotopic mass of the targeted metabolite (if the formula is unknow)', -1),
-        selectInput('adduct', 'Select the type of adduct', choices = list(
-          Positive = adducts$Name[adducts$Ion_mode == 'positive'],
-          Negative = adducts$Name[adducts$Ion_mode == 'negative']
-        )),
+        selectInput('target_select', 'How to define the targeted metabolite ?', c('formula', 'm/z of ion')),
+        uiOutput('formula_contral'),
         actionButton("button_formula", "Confirm"),
         
         h4('Isotopic Information (only used when the formula is given)'),
@@ -79,5 +75,20 @@ navbarPage(
         tableOutput('files_peaks')
       )
     )
+  ),
+  
+  tabPanel(
+    'Structure Analysis',
+    titlePanel("Structure Analysis"),
+    sidebarLayout(
+      sidebarPanel(
+        
+      ),
+      
+      mainPanel(
+        
+      )
+    )
   )
+  
 )

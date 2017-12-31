@@ -1,6 +1,6 @@
-\name{getIsoEIC}
-\alias{getIsoEIC}
-%- Also NEED an '\alias' for EACH other topic documented here.
+\name{getIsoEIC.formula}
+\alias{getIsoEIC.formula}
+
 \title{
 Get EIC of isotopic features.
 }
@@ -8,18 +8,15 @@ Get EIC of isotopic features.
 Get EIC of isotopic features.
 }
 \usage{
-getIsoEIC(raw, formula, fmz, nmax = 3, adduct = "M+H", ppm = 50, rtrange = c(0, Inf), threshold = 0.01)
+getIsoEIC.formula(raw, formula, nmax = 3, adduct = "M+H", ppm = 50, rtrange = c(0, Inf), threshold = 0.01)
 }
-%- maybe also 'usage' for other objects documented here.
+
 \arguments{
   \item{raw}{
 Result obtain by \code{LoadData}
 }
   \item{formula}{
-A chemical formula or \code{NULL}
-}
-  \item{fmz}{
-The m/z of targeted compound. if the formula is given, please set as -1.
+A chemical formula
 }
   \item{nmax}{
 n, where at maximum M+n isotopes are count.
@@ -49,6 +46,5 @@ files <- file.path(filepath, list.files(filepath, recursive = TRUE))[1:3]
 file1 <- files[1]
 raw <- LoadData(file1)
 
-eics <- getIsoEIC(raw, formula = NULL, fmz= 200.04, adduct = "M+H")
-eics <- getIsoEIC(raw, formula = 'C16H12O5', -1, adduct = "M+H")
+eics <- getIsoEIC(raw, formula = 'C16H12O5', adduct = "M+H")
 }

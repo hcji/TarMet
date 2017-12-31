@@ -14,10 +14,31 @@ function(input, output){
       numericInput('rtright', 'Input the end retention time', max(raw()$times))
     )
   })
+  output$formula_contral <- renderUI({
+    if (input$target_select == 'formula') {
+      tagList(
+        textInput('formula', 'Input the targeted metabolite'),
+        selectInput('adduct', 'Select the type of adduct', choices = list(
+          Positive = adducts$Name[adducts$Ion_mode == 'positive'],
+          Negative = adducts$Name[adducts$Ion_mode == 'negative']
+        ))
+      )
+    }else if (input$target_select == 'm/z of ion'){
+      tagList(
+        numericInput('fmz', 'Input the monoisotopic mass of the targeted ion of metabolite', 0),
+        numericInput('fcharge', 'Input the number of charge of ion', 1)
+      )
+    }
+  })
   
   EICs <- eventReactive(input$button_formula,{
     raw <- raw()
-    eics <- getIsoEIC(raw, input$formula, input$fmz, input$nmax, adduct = input$adduct, ppm = input$ppm, rtrange = c(input$rtleft, input$rtright), threshold = input$threshold)
+    if (input$target_select == 'formula') {
+      eics <- getIsoEIC.formula(raw, input$formula, nmax = input$nmax, adduct = input$adduct, ppm = input$ppm, rtrange = c(input$rtleft, input$rtright), threshold = input$threshold)
+    } else if (input$target_select == 'm/z of ion'){
+      eics <- getIsoEIC.mz(raw, input$fmz, nmax = input$nmax, ppm = input$ppm, rtrange = c(input$rtleft, input$rtright), charge = input$fcharge)
+    }
+    
     if (input$ifsmooth){
       eics$eics <- lapply(eics$eics, function(eic){
         if (sum(eic$intensity) > 0) {eic$intensity <- eic$intensity - airPLS(eic$intensity)}

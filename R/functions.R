@@ -3,13 +3,13 @@ runTarMet <- function(){
   runApp(appdir, display.mode = 'normal')
 }
 
-
 LoadData <- function(filename)
 {
   splitname <- strsplit(filename,"\\.")[[1]]
-  if(tolower(splitname[length(splitname)]) == "cdf")
-  {
+  if(tolower(splitname[length(splitname)]) == "cdf"){
     msobj <- openMSfile(filename,backend="netCDF")
+  }else if (tolower(splitname[length(splitname)]) == "mzml"){
+    msobj <- openMSfile(filename,backend="pwiz")
   }else{
     msobj <- openMSfile(filename,backend="Ramp")
   }
@@ -27,6 +27,39 @@ LoadData <- function(filename)
   })
   
   scanTime <- round(headerInfo$retentionTime[whMS1],3)
+  # close(msobj)
+  
+  return(list(path=filename, times=scanTime, peaks = peakInfo))
+}
+
+LoadSwath <- function(filename, preMz) {
+  splitname <- strsplit(filename,"\\.")[[1]]
+  if(tolower(splitname[length(splitname)]) == "cdf"){
+    msobj <- openMSfile(filename,backend="netCDF")
+  }else if (tolower(splitname[length(splitname)]) == "mzml"){
+    msobj <- openMSfile(filename,backend="pwiz")
+  }else{
+    msobj <- openMSfile(filename,backend="Ramp")
+  }
+  
+  peakInfo <- peaks(msobj)
+  headerInfo <- header(msobj)
+  
+  whMS2 <- headerInfo$msLevel==2
+  preMz_diff <- diff(headerInfo$precursorMZ[whMS2])
+  preMz_win <- mean(preMz_diff[preMz_diff>0])+1
+  whPre <- abs(headerInfo$precursorMZ - preMz) < 0.5*preMz_win
+  whTar <- which(whMS2 & whPre)
+  peakInfo <- peakInfo[whTar]
+  
+  peakInfo <- lapply(peakInfo, function(spectrum) {
+    keep <- spectrum[,2] > 1e-6
+    output <- as.data.frame(spectrum[keep,,drop = FALSE])
+    colnames(output) <- c('mz','intensity')
+    return(output)
+  })
+  
+  scanTime <- round(headerInfo$retentionTime[whTar],3)
   # close(msobj)
   
   return(list(path=filename, times=scanTime, peaks = peakInfo))
@@ -71,25 +104,31 @@ getIsoPat <- function(formula, d, threshold){
   return(as.data.frame(pattern))
 }
 
-getIsoEIC <- function(raw, formula, fmz, nmax = 3, adduct = 'M+H', ppm = 50, rtrange = c(0, Inf), threshold = 0.01){
+getIsoEIC.mz <- function(raw, fmz, nmax = 3, ppm = 50, rtrange = c(0, Inf), charge = 1){
+  mzs <- (fmz + 0:nmax * 1.0033) / charge
+  mzranges <- do.call(rbind, lapply(mzs, function(mz){
+    c(mz * (1 - ppm/2/10^6), mz * (1 + ppm/2/10^6))
+  }))
+  eics <- apply(mzranges, 1, function(mzrange){
+    getEIC(raw, rtrange, mzrange)
+  })
+  
+  return(list(mzs = mzranges, eics = eics))
+}
+
+getIsoEIC.formula <- function(raw, formula, nmax = 3, adduct = 'M+H', ppm = 50, rtrange = c(0, Inf), threshold = 0.01){
+
   data("adducts", package = "enviPat")
   adduct <- which(adduct == adducts$Name)
-  if (fmz < 0){
-    pattern <- getIsoPat(formula, adduct, threshold)
-    nmax <- min(nmax, round(max(pattern[,1] - pattern[1,1]))) 
-    mzs <- sapply(0:nmax, function(n){
-      pai <- pattern[round(pattern[,1]- pattern[1,1])==n,]
-      pai[which.max(pai[,2]) ,1]
-    })
-  } else {
-    data("adducts", package = "enviPat")
-    mzs <- fmz + 0:nmax * 1.0033
-  }
   
+  pattern <- getIsoPat(formula, adduct, threshold)
+  nmax <- min(nmax, round(max(pattern[,1] - pattern[1,1]))) 
+  mzs <- sapply(0:nmax, function(n){
+    pai <- pattern[round(pattern[,1]- pattern[1,1])==n,]
+    pai[which.max(pai[,2]) ,1]
+  })
+
   mzranges <- do.call(rbind, lapply(mzs, function(mz){
-    if (fmz > 0){
-      mz <- (mz * adducts$Mult[adduct] + adducts$Mass[adduct])
-    }
     c(mz * (1 - ppm/2/10^6), mz * (1 + ppm/2/10^6)) / adducts$Charge[adduct]
   }))
   

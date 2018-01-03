@@ -16,7 +16,7 @@ navbarPage(
     titlePanel("Isotopic Analysis"),
     sidebarLayout(
       sidebarPanel(
-        fileInput('file', 'Choose one of your raw data files'),
+        fileInput('file', 'Choose one of your raw MS or Swtch-MS data files'),
         
         h4('Metabolite Information'),
         selectInput('target_select', 'How to define the targeted metabolite ?', c('formula', 'm/z of ion')),
@@ -78,15 +78,22 @@ navbarPage(
   ),
   
   tabPanel(
-    'Structure Analysis',
-    titlePanel("Structure Analysis"),
+    'Swath-MS Analysis',
+    titlePanel("Swath-MS Analysis"),
     sidebarLayout(
       sidebarPanel(
-        
+        numericInput('int_thres', 'Input the threshold value of peak intensity', 0.7, min=0),
+        numericInput('corr_thres', 'Input the threshold value of coefficient of peak profile (from 0 to 1)', 0.7, min=0, max=1),
+        numericInput('area_thres', 'Input the threshold value of coefficient of peak areas (from 0 to 1)', 0.7, min=0, max=1),
+        numericInput('swath_ind', 'Input the sample index for plot', 1, step=1)
       ),
-      
       mainPanel(
-        
+        h4('Fragment Ion EICs'),
+        plotlyOutput('SwathEicPlot'),
+        h4('Fragment Ion Peak Areas'),
+        tableOutput('SwathAreaTable'),
+        h4('Pseudo MS2'),
+        tableOutput('SwathMS2')
       )
     )
   )

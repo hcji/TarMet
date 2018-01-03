@@ -1,3 +1,18 @@
 import("mzR", "data.table", "enviPat", "Matrix", "shiny", "plotly", "MassSpecWavelet")
-exportPattern("runTarMet", "LoadData", "getEIC", "getIsoPat", "getIsoEIC",
-"getIsoPeaks", "getArea", "airPLS", "integration", "PAFFT")
+exportPattern("runTarMet", 
+              "LoadData", 
+              "getEIC", 
+              "getIsoPat", 
+              "getIsoEIC.formula",
+              "getIsoEIC.mz",
+              "getIsoPeaks", 
+              "getArea", 
+              "airPLS", 
+              "integration", 
+              "PAFFT",
+              "plotEICs",
+              "LoadSwath",
+              "getSwathMz",
+              "getSwathEICs",
+              "getSwathCharIon",
+              "getSwathArea")

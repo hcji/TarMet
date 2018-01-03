@@ -1,7 +1,7 @@
 ---
 title: "TarMet"
 author: "Hongchao Ji"
-date: "2017/12/17"
+date: "2018/1/2"
 package: TarMet
 output:
   BiocStyle::html_document:
@@ -14,89 +14,165 @@ vignette: >
   %\VignettePackage{TarMet}
 ---
 
-## Introduction
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
 TarMet is a shiny application for targeted metabolic analyses based on mass spectrometry. TarMet can detect all of the isotopologues of target metabolites, and quantify the metabolites based on the peak areas automatically and efficiently.
 
-## Usage
-
-### Isotopic Analysis
-
-#### Upload Raw Data
-TarMet uses *mzR* to parse raw data. The upload files can be *mzML*, *mzXML*, *mzData* or *CDF* format. Only one file can be upload in the isotope analysis step, while multiple files can be accepted in the quantitative analysis step.
-
-#### Metabolite Information
-The matabolite can be input as formulas or monoisotopic mass. If you choose to input a formula, please keep the monoisotopic mass input as *-1*, or the input formula is useless. You can select which kinds of adduct to be detected. Usually *M+H*, *M+Na* and *M+K* are common in positive mode, while *M-H* and *M+Cl* are common in negative mode.
-
-#### Isotopic Information
-The only parameter is the threshold of relative abundance. Only peaks above the threshold are under consideration.
-
-#### EIC Extraction
-The extraction ion chromatograms are obtained by sum the data points within a specific m/z tolerance, given as ppm. You can also choose to remove the baseline via airPLS algorithm.
-
-#### Peak Detection
-The peak detection is based on *MassSpecWavelet* package. Three parameters should be given, which are the minimum snrs, minimum scales of peaks and minimum intensities of peaks.
-
-#### EIC Plot
-The EIC Plot will contain the EICs obatined based on the input, as well as the detected peaks and the bounds of peaks. If there is no peaks in the given m/z range, it will show nothing, please adjust your input.
-
-#### Peak Information
-This table will shows the information of obtained peaks based on the input, including m/z, peak range, peak area, etc.
-
-
-### Quantitative Analysis
-
-#### Upload Raw Data
-In this step, you can upload multiple data files. The target metabolite will be extracted from all of the input data files. The information used is the same as the last step. 
-
-#### Alignment
-Usually, retention time of the same metabolite may differs between different samples. You can choose whether to correct the time shift. 
-
-#### Isotope Information
-Choose which isotopologue is used for quantitative analysis. It is the index of the peaks in the peak information table.
-
-## Functions
-
-Actually, for the end user, all of the functions can be used in the shiny app. Here is some funtions invoked in the app. The MTBLS2 dataset is used for an example.
-
-```{r, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
-# Load Dataset
+# Functions
+In this section, it will be described how TarMet process the MS dataset. it will also introduce what the parameters represent, and how to set them. Although, for the end user, all of the functions can be used in the shiny app, the backend funtions will also be described here. Now, we use *mtbls2* dataset as an example.
+```{r example_data, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
 library(TarMet)
 library(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
-files <- file.path(filepath, list.files(filepath, recursive = TRUE))[1:3]
-
-file1 <- files[1]
-raw <- LoadData(file1)
-
-# Get EICs from raw data directly
-eic <- getEIC(raw, rtrange = c(0, Inf), mzrange = c(201.03, 201.05))
-plot(eic$rt, eic$intensity, 'l')
-
-# But usually we usually get the isotopic EICs of a specific formula at the same time.
-eics <- getIsoEIC(raw, formula = NULL, fmz= 200.04, adduct = "M+H") # or you can give the formula, if so, please keep fmz=-1 i you give a formula.
-# If the formula is given, the isotopic pattern is obtained by the function of 
-pattern <- getIsoPat('C16H12O5', 'M+H', 0.2)
-pattern
-
-# Then we can detect peak from the EICs, and get the peak areas.
-peaks <- getIsoPeaks(eics, SNR.Th = 4, peakScaleRange = 5)
-# The user can also define the start and the end of a peak manually, and the area is calculated by:
-areas <- getArea(eics, rtmin = 0, rtmax = Inf)
-# The method of calculating the area is by trapezoidal integration, for example:
-res <- integration(x = 1:20,yf = 20:1)
-
-# If more than one example is processed, TarMet uses a alignment method to correct the time shift of EICs:
-
-# get eics from a set of samples:
-rawfiles <- lapply(files, LoadData)
-eics <- lapply(rawfiles, function(raw){
-  getEIC(raw, c(0, Inf), mzrange = c(201.03, 201.05))
-})
-# correct the time shift between sample 1 and sample 2 (for example)
-spectra <- t(eics[[1]]$intensity)
-reference <- t(eics[[2]]$intensity)
-res <- PAFFT(spectra, reference, segSize = 150, shift = 50)
-
+files <- file.path(filepath, list.files(filepath, recursive = TRUE))[1:3] # A set of files
+file1 <- files[1] # one file, which is used for isotopic analysis
 ```
+
+## Isotopic Analysis
+Isotopic analysis is meanly used for extracting the isotope peaks of the targeted compound. The purposes is either find the isotope pattern of the targeted compound (for example isotopic labeling assay, or annoatating formula of unknown compound) or use the isotope pattern to locating the retention time (when more than one peak in an EIC).
+
+### Upload Raw Data
+TarMet uses *mzR* to parse raw data. The upload files can be *mzML*, *mzXML*, *mzData* or *CDF* format. Only one file can be upload in the isotope analysis step. The peak detection results of this file will be regard as the reference in the subsequent steps. When you process dataset of multiple classes, a QC sample is recommand to be upload in this step. After upload, TarMet will read the information with *LoadData* function:
+```{r load_data1, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+raw <- LoadData(file1)
+```
+
+### Metabolite Information
+The matabolite can be input as formulas or monoisotopic mass. 
+If you choose to input a formula. You can select which kinds of adduct to be detected. Usually *M+H*, *M+Na* and *M+K* are common in positive mode, while *M-H* and *M+Cl* are common in negative mode. You should also give the threshold of relative abundance, and only peaks above the threshold are under consideration. The isotope pattern will be calculated by *getIsoPat* function:
+```{r cal_isotope, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+pattern <- getIsoPat('C16H12O5', 'M+H', 0.2)
+```
+If you choose to input the targeted ion, TarMet will directly use the targeted m/z for the EIC extraction. This mode is usually used when the formula is unknow. You should give the possible charge of the ion for locating the m/z isotope peaks.
+
+### EIC Extraction
+The extraction ion chromatograms are obtained by sum the data points within a specific m/z tolerance, given as ppm. You can also choose to remove the baseline via airPLS algorithm. 
+If you input metabolite information by giving the m/z, the EICs will be extracted by *getIsoEIC.mz* function:
+```{r get_eic_mz, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+eics <- getIsoEIC.mz(raw,  fmz= 201.04, ppm=100)
+```
+If you input metabolite information by giving the formula, the EICs will be extracted by *getIsoEIC.formula* function:
+```{r get_eic_formula, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+eics1 <- getIsoEIC.formula(raw, formula='C16H12O5', adduct='M+H', ppm=100)
+```
+After Extraction, the EICs will be plot in the main panel via *plotEICs* function:
+```{r plot_eic_mz, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+plotEICs(eics)
+```
+
+### Peak Detection
+The peak detection is based on *MassSpecWavelet* package. Three parameters should be given, which are the minimum snrs, minimum scales of peaks and minimum intensities of peaks. Besides, the peak bound of each peak will also be calculated, which is used for calculated the peak area.
+```{r peak_dec, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+peaks <- getIsoPeaks(eics, SNR.Th = 4, peakScaleRange = 5)
+```
+After peak detection, if there are peaks in the extracted EICs, the the information will be added in the EIC plot, and the peak information will be shown below the plot.
+```{r peak_info, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+plotEICs(eics, peaks)
+peaks$PeakInfo
+peaks$PeakArea
+```
+
+## Quantitative Analysis
+Quantitative analysis aims to calculate the relative amount of the targeted compound in the samples. This is usually used for verify whether the targeted compound is the potential biomarker or not. 
+
+### Upload Raw Data
+In this step, you should upload multiple data files. The target metabolite will be extracted from all of the input data files. The information used is those obtained in the last step. TarMet obtains the EICs of multiple files via the following codes:
+```{r raw_multi, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+rawfiles <- lapply(files, LoadData)
+Names <- sapply(files, function(f){
+  Name <- strsplit(f,'/')[[1]]
+  Name[length(Name)]
+})
+mzrange <- eics$mzs[1, ] # choose the first isotope feature, it can be adjusted in the app. 
+files_eics <- lapply(rawfiles, function(raw){
+  getEIC(raw, c(0, Inf), mzrange)
+})
+plotEICs(list(eics=files_eics), Names=Names)
+```
+
+### Alignment
+Usually, retention time of the same metabolite may differs between different samples. You can choose whether to correct the time shift. If you choose to align the samples, you should also give the maximum tolerence time shifts. TarMet do this step with the following code:
+```{r alignment, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+rt <- eics$eics[[1]]$rt # obtain the rt list of the reference data file, which is used for interpolation.
+align.seg <- 150; align.shift <- 150 # parameters of alignment, which can be adjusted in the app.
+eic <- eics$eics[[1]] # obtain the first isotope EIC of the reference data file, which is used for interpolation.
+for (i in 1:length(files_eics)){
+  # interpolation
+  intensity.new <- approx(x=files_eics[[i]]$rt, y=files_eics[[i]]$intensity, xout=rt, rule = 2)$y
+  # remove baseline (optional)
+  intensity.new <- intensity.new - airPLS(intensity.new) 
+  # alignment (optional)
+  intensity.new <- PAFFT(t(intensity.new), t(eic$intensity), 
+                         align.seg, align.shift)$alignedSpectrum
+  files_eics[[i]]$intensity <- as.numeric(intensity.new)
+  files_eics[[i]]$rt <- rt
+}
+plotEICs(list(eics=files_eics), Names=Names)
+```
+
+### Quantitative Result
+Finally, the quantitative results will be shown in the main panel below the EICs, which are calculated by:
+```{r quan_result, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+target_left <- 620; target_right <- 640 # peak bounds, either given by user or set based on the peak detection result automatically.
+Areas <- sapply(files_eics, function(eics){
+  eics <- list(rt=rt, eics=list(eics))
+  getArea(eics, target_left, target_right)
+})
+Areas <- round(Areas, 3)
+Areas
+```
+
+## Swath-MS Analysis
+In contrast to traditional data-dependent MS/MS acquisitions, Swath-MS is a data independent method which can obtain all fragment ions for all precursors simultaneously, thereby increasing the coverage of observable molecules and reducing the identification of false negatives. TarMet uses the intensity correlation of fragment ions in different samples to obtain the fragments of the targeted compound. The fragments can used for qualitative analysis when the exact structure of targeted compound is unknown.
+
+### Upload Swath-MS Data
+In this section, the input dataset must be obtained in Swath-MS mode, including the input data in the *Isotopic Analysis* step. Please choose at least three files in this panel, and choose one reference data file in the *Isotopic Analysis* step.
+
+### Load Swath-MS data files.
+The process of MS1 data of the reference data file is done in the *Isotopic Analysis* step. However, in order to make it more integrated, it is also described here. 
+```{r ref_swath, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+swath_files <- list.files('F:/DIA_demo', full.names = TRUE)
+swath_file1 <- swath_files[1]
+tar_mz <- 935.5868 # m/z of targeted ion.
+
+ref_raw <- LoadData(swath_file1) # load MS1 data of reference
+ref_swath <- LoadSwath(swath_file1, tar_mz) # load MS2 data of reference
+swath_raws <- lapply(swath_files, function(swath_file){
+  LoadSwath(swath_file, tar_mz)
+}) # load MS2 data of all files
+```
+
+### Extracting EICs of fragment ions.
+To get the EICs of fragment ions, the mzs of fragment ions should be defined. In the *Isotopic Analysis* step, we have defined the peak position and peak bounds. Thus, TarMet uses the mzs mass spectrum in that retention time. This is done by the *getSwathMz* function. Then, TarMet extracts EICs of fragment ion of the reference data file first.
+```{r mz_swath, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+# process MS1 data of reference data file
+ref_eics <- getIsoEIC.mz(ref_raw, fmz= tar_mz, ppm=20)
+ref_peaks <- getIsoPeaks(ref_eics, SNR.Th = 4, peakScaleRange = 5)
+# set the position of peak
+peak_position <- ref_peaks$PeakInfo$Position[2] # use the first peak of peak detection result.
+# get the mzs and eics of fragment ions.
+swath_mz <- getSwathMz(ref_swath, peak_position, ppm=100)
+swath_eics <- getSwathEICs(ref_swath, swath_mz, ppm=100)
+```
+
+### Refine fragment ions based in peak profiles.
+Generally, the fragment ions are produced at the same time as the precursor ion, therefore, the peak profiles of the fragment ions should be similar to the profile of the precursor ion. First, TarMet refine the EICs based on correlation between the fragment ions and the precursor ion. The one with maximum correlation is appointed as characteristic ion. The codes are:
+```{r frag_refine, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+# get the profile of the precursor ion. 
+eic_ms1 <- ref_eics$eics[[1]]
+# set peak bounds, either given by user or set based on the peak
+target_left <- 277; target_right <- 290 
+# set the threshold value of correlation and intensity, can be adjusted in the app, here we use a high value for simplification
+corr_thres <- 0.7; int_thres <- 200
+
+char_ion <- getSwathCharIon(swath_eics, swath_mz, eic_ms1, target_left, target_right, corr_thres, int_thres)
+plotEICs(list(eics=char_ion$refine_eics), Names = paste('Mz:', char_ion$swath_mz))
+```
+
+### Calculate the peak areas of EICs of fragment ions.
+
 
 

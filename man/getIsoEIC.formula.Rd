@@ -46,5 +46,5 @@ files <- file.path(filepath, list.files(filepath, recursive = TRUE))[1:3]
 file1 <- files[1]
 raw <- LoadData(file1)
 
-eics <- getIsoEIC(raw, formula = 'C16H12O5', adduct = "M+H")
+eics <- getIsoEIC.formula(raw, formula = 'C16H12O5', adduct = "M+H")
 }

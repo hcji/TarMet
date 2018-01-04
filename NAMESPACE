@@ -10,9 +10,4 @@ exportPattern("runTarMet",
               "airPLS", 
               "integration", 
               "PAFFT",
-              "plotEICs",
-              "LoadSwath",
-              "getSwathMz",
-              "getSwathEICs",
-              "getSwathCharIon",
-              "getSwathArea")
+              "plotEICs")

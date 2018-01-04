@@ -8,7 +8,7 @@ Get EIC of isotopic features.
 Get EIC of isotopic features.
 }
 \usage{
-getIsoEIC.mz(raw, fmz, nmax = 3, ppm = 50, rtrange = c(0, Inf))
+getIsoEIC.mz(raw, fmz, nmax = 3, ppm = 50, rtrange = c(0, Inf), charge = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -43,6 +43,6 @@ files <- file.path(filepath, list.files(filepath, recursive = TRUE))[1:3]
 file1 <- files[1]
 raw <- LoadData(file1)
 
-eics <- getIsoEIC(raw, fmz= 200.04)
+eics <- getIsoEIC.mz(raw, fmz= 200.04)
 }
 

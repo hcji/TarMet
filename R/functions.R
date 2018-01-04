@@ -179,6 +179,24 @@ integration <- function(x,yf){
   return(integral)
 }
 
+plotEICs <- function(eics, peaks = NULL, Names = NULL) {
+  p <- plot_ly() %>%
+    layout(xaxis = list(tick0 = 0, title = 'Retention Time (s)'),
+           yaxis = list(title = 'Intensity'))
+  if (is.null(Names)){
+    Names = paste('Mz: ',round(eics$mzs[,1],4), ' - ', round(eics$mzs[,2],4))
+  }
+  for (f in 1: length(eics$eics)) {
+    p <- add_trace(p, x = eics$eics[[f]]$rt, y = eics$eics[[f]]$intensity, mode='line', name = paste(Names[f]))
+  }
+  if (!is.null(peaks)){
+    eic <- eics$eics[[1]]
+    p <- add_markers(p, x = eic$rt[peaks$Index$Position], y = eic$intensity[peaks$Index$Position], name = 'peak position', color = I('red'), marker = list(size = 5))
+    p <- add_markers(p, x = eic$rt[c(peaks$Index$Start, peaks$Index$End)], y = eic$intensity[c(peaks$Index$Start, peaks$Index$End)], name = 'peak bound', color = I('blue'), marker = list(size = 5))
+  }
+  return(p)
+}
+
 # PAFFT
 PAFFT <- function(spectra,reference,segSize,shift){
   lags <- alignedSpectrum <- matrix(0,nrow(spectra),ncol(spectra))
@@ -479,118 +497,3 @@ extendLength <- function(x, addLength=NULL, method=c('reflection', 'open', 'circ
   
   return(x)
 }
-
-# add support for MS-Swatch mode
-
-LoadSwath <- function(filename, preMz) {
-  splitname <- strsplit(filename,"\\.")[[1]]
-  if(tolower(splitname[length(splitname)]) == "cdf"){
-    msobj <- openMSfile(filename,backend="netCDF")
-  }else if (tolower(splitname[length(splitname)]) == "mzml"){
-    msobj <- openMSfile(filename,backend="pwiz")
-  }else{
-    msobj <- openMSfile(filename,backend="Ramp")
-  }
-  
-  peakInfo <- peaks(msobj)
-  headerInfo <- header(msobj)
-  
-  whMS2 <- headerInfo$msLevel==2
-  preMz_diff <- diff(headerInfo$precursorMZ[whMS2])
-  preMz_win <- mean(preMz_diff[preMz_diff>0])+1
-  whPre <- abs(headerInfo$precursorMZ - preMz) < 0.5*preMz_win
-  whTar <- which(whMS2 & whPre)
-  peakInfo <- peakInfo[whTar]
-  
-  peakInfo <- lapply(peakInfo, function(spectrum) {
-    keep <- spectrum[,2] > 1e-6
-    output <- as.data.frame(spectrum[keep,,drop = FALSE])
-    colnames(output) <- c('mz','intensity')
-    return(output)
-  })
-  
-  scanTime <- round(headerInfo$retentionTime[whTar],3)
-  # close(msobj)
-  
-  return(list(path=filename, times=scanTime, peaks = peakInfo))
-}
-
-getSwathMz <- function(raw_swath, peak_position, ppm) {
-  peak_position <- as.numeric(as.character(peak_position))
-  scan <- which.min(abs(peak_position - (raw_swath$times)))
-  SwathMz <- raw_swath$peaks[[scan]]$mz
-  SwathInt <- raw_swath$peaks[[scan]]$intensity
-  dels <- which(diff(SwathMz)/SwathMz[seq_along(SwathMz)[-1]]*10^6 < 0.5*ppm)
-  if (length(dels)>0){
-    SwathMz <- SwathMz[-dels]
-  }
-  return(SwathMz)
-}
-
-getSwathEICs <- function(raw_swath, swath_mz, ppm, rtrange = c(0, Inf)){
-  mzranges <- do.call(rbind, lapply(swath_mz, function(mz){
-    c(mz * (1 - ppm/2/10^6), mz * (1 + ppm/2/10^6))
-  }))
-  eics <- apply(mzranges, 1, function(mzrange){
-    getEIC(raw_swath, rtrange, mzrange)
-  })
-  return (list(mzs=mzranges, eics=eics))
-}
-
-getSwathCharIon <- function(swath_eics, swath_mz, eic_ms1, rt_left, rt_right, corr_thres = 0.7, int_thres = 0){
-  rt_left <- as.numeric(as.character(rt_left))
-  rt_right <- as.numeric(as.character(rt_right))
-  rt_ref <- eic_ms1$rt[eic_ms1$rt>=rt_left & eic_ms1$rt<=rt_right]
-  eic_ref <- eic_ms1$intensity[eic_ms1$rt>=rt_left & eic_ms1$rt<=rt_right]
-  swath_eics <- swath_eics$eics
-  swath_corr <- sapply(swath_eics, function(eic){
-    eic_int <- approx(eic$rt, eic$intensity, rt_ref, rule=2)$y
-    if (max(eic_int) < int_thres) {
-      return(0)
-    } else {
-      return(cor(eic_ref, eic_int))
-    }
-  })
-  
-  char_ion <- swath_mz[which.max(swath_corr)]
-  swath_mz <- swath_mz[swath_corr > corr_thres]
-  swath_eics <- swath_eics[swath_corr > corr_thres]
-  swath_corr <- swath_corr[swath_corr > corr_thres]
-  return(list(refine_eics = swath_eics, char_ion=char_ion, swath_mz=swath_mz, swath_corr=swath_corr))
-}
-
-getSwathArea <- function(raw_swaths, char_ion, ppm, rt_left, rt_right, align.seg, align.shift, area.thres) {
-  inter <- mean(diff(raw_swaths[[1]]$times))
-  align.seg <- round(align.seg/inter)
-  align.shift <- round(align.shift/inter)
-    
-  swath_mz <- char_ion$swath_mz
-  char_ind <- which.min(abs(swath_mz-char_ion$char_ion))
-  swath_eics_ref <- char_ion$refine_eics
-  swaths_eics <- lapply(raw_swaths, function(raw_swath_i){
-    eics <- getSwathEICs(raw_swath_i, swath_mz, ppm)$eics
-    for (i in 1:length(eics)){
-      eics[[i]]$intensity <- approx(eics[[i]]$rt, eics[[i]]$intensity, swath_eics_ref[[i]]$rt, rule = 2)$y
-      eics[[i]]$intensity <- as.numeric(PAFFT(t(eics[[i]]$intensity), t(swath_eics_ref[[i]]$intensity), align.seg, align.shift)$alignedSpectrum)
-      eics[[i]]$rt <- swath_eics_ref[[i]]$rt
-    }
-    return(list(eics = eics))
-  })
-  swaths_areas <- lapply(swaths_eics, function(swath_eics){
-    getArea(swath_eics, rt_left, rt_right)
-  })
-  swaths_areas <- do.call(rbind, swaths_areas)
-  colnames(swaths_areas) <- round(swath_mz, 3)
-  
-  areas_corr <- sapply(1:ncol(swaths_areas), function(s){cor(swaths_areas[,s], swaths_areas[,char_ind])})
-  ord <- order(-areas_corr)
-  ord <- ord[areas_corr > area.thres]
-  
-  swaths_areas <- swaths_areas[, ord]
-  areas_corr <- areas_corr[ord]
-  swaths_eics <- swaths_eics[ord]
-  swath_mz <- swath_mz[ord]
-  
-  return(list(swath_mz=swath_mz, swaths_areas=swaths_areas, areas_corr=areas_corr, swaths_eics=swaths_eics))
-}
-

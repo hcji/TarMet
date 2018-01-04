@@ -33,7 +33,7 @@ filepath <- file.path(find.package("mtbls2"), "mzData")
 files <- file.path(filepath, list.files(filepath, recursive = TRUE))[1:3]
 file1 <- files[1]
 raw <- LoadData(file1)
-eics <- getIsoEIC(raw, formula = NULL, fmz= 200.04, adduct = "M+H")
+eics <- getIsoEIC.mz(raw, fmz= 200.04)
 
 areas <- getArea(eics, rtmin = 0, rtmax = Inf)
 }

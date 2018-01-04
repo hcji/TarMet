@@ -75,27 +75,5 @@ navbarPage(
         tableOutput('files_peaks')
       )
     )
-  ),
-  
-  tabPanel(
-    'Swath-MS Analysis',
-    titlePanel("Swath-MS Analysis"),
-    sidebarLayout(
-      sidebarPanel(
-        numericInput('int_thres', 'Input the threshold value of peak intensity', 0.7, min=0),
-        numericInput('corr_thres', 'Input the threshold value of coefficient of peak profile (from 0 to 1)', 0.7, min=0, max=1),
-        numericInput('area_thres', 'Input the threshold value of coefficient of peak areas (from 0 to 1)', 0.7, min=0, max=1),
-        numericInput('swath_ind', 'Input the sample index for plot', 1, step=1)
-      ),
-      mainPanel(
-        h4('Fragment Ion EICs'),
-        plotlyOutput('SwathEicPlot'),
-        h4('Fragment Ion Peak Areas'),
-        tableOutput('SwathAreaTable'),
-        h4('Pseudo MS2'),
-        tableOutput('SwathMS2')
-      )
-    )
   )
-  
 )

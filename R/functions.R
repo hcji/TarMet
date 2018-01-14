@@ -46,7 +46,7 @@ getEIC <- function(raw, rtrange, mzrange){
   return(list(rt = rt, intensity = intensity))
 }
 
-getIsoPat <- function(formula, d, threshold){
+getIsoPat <- function(formula, d, threshold, resolution){
   data("isotopes", package = "enviPat")
   data("adducts", package = "enviPat")
   if (!is.numeric(d)){d <- which(d == adducts$Name)}
@@ -67,12 +67,25 @@ getIsoPat <- function(formula, d, threshold){
     }
   }
   checked <- check_chemform(isotopes, chemform)
-  pattern <- isopattern(isotopes, checked$new_formula, threshold = threshold)[[1]][, c(1,2)]
+  pattern <- isowrap(isotopes, checked, resmass=FALSE, threshold = threshold, resolution = resolution)[[1]]
   return(as.data.frame(pattern))
 }
 
-getIsoEIC.mz <- function(raw, fmz, nmax = 3, ppm = 50, rtrange = c(0, Inf), charge = 1){
-  mzs <- (fmz + 0:nmax * 1.0033) / charge
+getIsoEIC.mz <- function(raw, fmz, nmax = 4, ppm = 50, rtrange = c(0, Inf), charge = 1,
+                         C13 = 3, H2 = 0, O18 = 0, N15 = 0, S34 = 0){
+  
+  mass <- (0:C13 * 1.003355)
+  mass <- unlist(lapply(0:H2 * 1.006277, function(s) s+mass))
+  mass <- unlist(lapply(0:O18 * 2.004245, function(s) s+mass))
+  mass <- unlist(lapply(0:N15 * 0.997035, function(s) s+mass))
+  mass <- unlist(lapply(0:S34 * 1.995796, function(s) s+mass))
+  mass <- mass[mass < (nmax + 0.1)]
+  mass <- sort(mass)
+
+  mzs <- (fmz + mass)/charge
+  remain <- diff(mzs)/mzs[-1]*10^6 > 0.5 * ppm
+  mzs <- mzs[remain]
+  
   mzranges <- do.call(rbind, lapply(mzs, function(mz){
     c(mz * (1 - ppm/2/10^6), mz * (1 + ppm/2/10^6))
   }))
@@ -83,30 +96,28 @@ getIsoEIC.mz <- function(raw, fmz, nmax = 3, ppm = 50, rtrange = c(0, Inf), char
   return(list(mzs = mzranges, eics = eics))
 }
 
-getIsoEIC.formula <- function(raw, formula, nmax = 3, adduct = 'M+H', ppm = 50, rtrange = c(0, Inf), threshold = 0.01){
+getIsoEIC.formula <- function(raw, formula, adduct = 'M+H', ppm = 50, rtrange = c(0, Inf), threshold = 0.01, resolution = 50000){
 
   data("adducts", package = "enviPat")
   adduct <- which(adduct == adducts$Name)
   
-  pattern <- getIsoPat(formula, adduct, threshold)
-  nmax <- min(nmax, round(max(pattern[,1] - pattern[1,1]))) 
-  mzs <- sapply(0:nmax, function(n){
-    pai <- pattern[round(pattern[,1]- pattern[1,1])==n,]
-    pai[which.max(pai[,2]) ,1]
-  })
+  pattern <- getIsoPat(formula, adduct, threshold, resolution)
+  mzs <- pattern[,1]
+  ppm <- min(ppm, 0.5*(diff(pattern[,1])/pattern[-1,1]*10^6))
 
   mzranges <- do.call(rbind, lapply(mzs, function(mz){
-    c(mz * (1 - ppm/2/10^6), mz * (1 + ppm/2/10^6)) / adducts$Charge[adduct]
+    c(mz * (1 - ppm/2/10^6), mz * (1 + ppm/2/10^6)) / abs(adducts$Charge[adduct])
   }))
   
   eics <- apply(mzranges, 1, function(mzrange){
     getEIC(raw, rtrange, mzrange)
   })
   
-  return(list(mzs = mzranges, eics = eics))
+  return(list(mzs = mzranges, pattern = pattern, eics = eics))
 }
 
 getIsoPeaks <- function(eics, SNR.Th = 4, peakScaleRange = 5, peakThr = 0, userDefTime = NULL){
+  peakScaleRange <- round(peakScaleRange/ mean(diff(eics$eics[[1]]$rt)))
   ind <- which.max(sapply(eics$eics, function(s){
     sum(s$intensity)
   }))
@@ -138,11 +149,16 @@ getIsoPeaks <- function(eics, SNR.Th = 4, peakScaleRange = 5, peakThr = 0, userD
   return(list(PeakInfo = PeakInfo, PeakArea = PeakArea, Index = Index))
 }
 
-getArea <- function(eics, rtmin, rtmax){
+getArea <- function(eics, rtmin, rtmax, intensity = FALSE){
   areas <- sapply(eics$eics, function(eic){
     Start <- findInterval(rtmin, eic$rt)+1
     End <- findInterval(rtmax, eic$rt)
-    Area <- integration(eic$rt[Start:End], eic$intensity[Start:End])
+    if (intensity == TRUE){
+      Area <- max(eic$intensity[Start:End])
+    } else {
+      Area <- integration(eic$rt[Start:End], eic$intensity[Start:End])
+    }
+    
     Area
   })
   
@@ -179,6 +195,28 @@ integration <- function(x,yf){
   return(integral)
 }
 
+<<<<<<< HEAD
+plotEICs <- function(eics, peaks = NULL, Names = NULL, rt = NULL) {
+  if (!is.null(rt)){
+    eics <- lapply(eics, function(eic){
+      ids <- eic$rt>rt[1] & eic$rt<rt[2]
+      eic$rt <- eic$rt[ids]
+      eic$intensity <- eic$intensity[ids]
+      eic
+    })
+  }
+  p <- plot_ly() %>%
+    layout(xaxis = list(tick0 = 0, title = 'Retention Time (s)'),
+           yaxis = list(title = 'Intensity'))
+  if (is.null(Names)) {
+    Names <- paste('Trace', seq_along(eics))
+  }
+  for (f in seq_along(eics)) {
+    p <- add_trace(p, x = eics[[f]]$rt, y = eics[[f]]$intensity, mode='line', name = Names[f])
+  }
+  if (!is.null(peaks)){
+    eic <- eics[[1]]
+=======
 plotEICs <- function(eics, peaks = NULL, Names = NULL) {
   p <- plot_ly() %>%
     layout(xaxis = list(tick0 = 0, title = 'Retention Time (s)'),
@@ -191,6 +229,7 @@ plotEICs <- function(eics, peaks = NULL, Names = NULL) {
   }
   if (!is.null(peaks)){
     eic <- eics$eics[[1]]
+>>>>>>> master
     p <- add_markers(p, x = eic$rt[peaks$Index$Position], y = eic$intensity[peaks$Index$Position], name = 'peak position', color = I('red'), marker = list(size = 5))
     p <- add_markers(p, x = eic$rt[c(peaks$Index$Start, peaks$Index$End)], y = eic$intensity[c(peaks$Index$Start, peaks$Index$End)], name = 'peak bound', color = I('blue'), marker = list(size = 5))
   }

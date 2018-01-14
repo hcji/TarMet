@@ -38,13 +38,14 @@ Isotopic analysis is meanly used for extracting the isotope peaks of the targete
 TarMet uses *mzR* to parse raw data. The upload files can be *mzML*, *mzXML*, *mzData* or *CDF* format. Only one file can be upload in the isotope analysis step. The peak detection results of this file will be regard as the reference in the subsequent steps. When you process dataset of multiple classes, a QC sample is recommand to be upload in this step. After upload, TarMet will read the information with *LoadData* function:
 ```{r load_data1, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
 raw <- LoadData(file1)
+rawfiles <- lapply(files, LoadData)
 ```
 
 ### Metabolite Information
 The matabolite can be input as formulas or monoisotopic mass. 
 If you choose to input a formula. You can select which kinds of adduct to be detected. Usually *M+H*, *M+Na* and *M+K* are common in positive mode, while *M-H* and *M+Cl* are common in negative mode. You should also give the threshold of relative abundance, and only peaks above the threshold are under consideration. The isotope pattern will be calculated by *getIsoPat* function:
 ```{r cal_isotope, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
-pattern <- getIsoPat('C16H12O5', 'M+H', 0.2)
+pattern <- getIsoPat('C16H12O5', 'M+H', 0.2, 50000)
 ```
 If you choose to input the targeted ion, TarMet will directly use the targeted m/z for the EIC extraction. This mode is usually used when the formula is unknow. You should give the possible charge of the ion for locating the m/z isotope peaks.
 
@@ -75,25 +76,14 @@ peaks$PeakInfo
 peaks$PeakArea
 ```
 
-## Quantitative Analysis
-Quantitative analysis aims to calculate the relative amount of the targeted compound in the samples. This is usually used for verify whether the targeted compound is the potential biomarker or not. 
-
-### Upload Raw Data
-In this step, you should upload multiple data files. The target metabolite will be extracted from all of the input data files. The information used is those obtained in the last step. TarMet obtains the EICs of multiple files via the following codes:
-```{r raw_multi, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
-rawfiles <- lapply(files, LoadData)
-Names <- sapply(files, function(f){
-  Name <- strsplit(f,'/')[[1]]
-  Name[length(Name)]
-})
+### Alignment
+For a set of samples, the EICs are obtained by 
+```{r get_eic_files, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
 mzrange <- eics$mzs[1, ] # choose the first isotope feature, it can be adjusted in the app. 
 files_eics <- lapply(rawfiles, function(raw){
-  getEIC(raw, c(0, Inf), mzrange)
+  getEIC.mz(raw, c(0, Inf), mzrange)
 })
-plotEICs(list(eics=files_eics), Names=Names)
 ```
-
-### Alignment
 Usually, retention time of the same metabolite may differs between different samples. You can choose whether to correct the time shift. If you choose to align the samples, you should also give the maximum tolerence time shifts. TarMet do this step with the following code:
 ```{r alignment, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
 rt <- eics$eics[[1]]$rt # obtain the rt list of the reference data file, which is used for interpolation.
@@ -125,4 +115,56 @@ Areas <- round(Areas, 3)
 Areas
 ```
 
+<<<<<<< HEAD
+## Swath-MS Analysis
+In this section, the input dataset must be obtained in Swath-MS mode. In contrast to traditional data-dependent MS/MS acquisitions, Swath-MS is a data independent method which can obtain all fragment ions for all precursors simultaneously, thereby increasing the coverage of observable molecules and reducing the identification of false negatives. In TarMet, the swath-ms analysis is followed by the *Isotopic Analysis*, thus, the analysis are based on the previous results. However, for ensure the integrality, they are also included in this section.
+
+### Load Swath-MS data files.
+Since the Swath-MS data files are too big, one targeted ion is selected as an example. The related data has been save in this package. which are obtained by the following codes.
+```{r ref_swath, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+# load raw data
+swath_files <- list.files('F:/DIA_demo', full.names = TRUE)
+swath_files_raw <- lapply(swath_files, LoadSwath)
+# load MS1 and MS2 of the targeted compound
+tar_mz <- 935.5868
+swath_files_ms1 <- lapply(swath_files, LoadData)
+swath_files_ms2 <- lapply(swath_files_raw, function(r){
+  getSwathData(r, tar_mz)
+})
+```
+
+### Extracting EICs of fragment ions.
+To get the EICs of fragment ions, the mzs of fragment ions should be defined. In the *Isotopic Analysis* step, we have defined the peak position and peak bounds. Thus, TarMet uses the mzs mass spectrum in that retention time. This is done by the *getSwathMz* function. Then, TarMet extracts EICs of fragment ion of the reference data file first. Here are the steps in details:
+
+```{r mz_swath, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+# 1. Get MS1 EICs
+ppm <- 50
+swath_files_ms1_eics <- lapply(swath_files_ms1, function(f){
+  getIsoEIC.mz(f, tar_mz, nmax = 1, ppm = ppm)
+})
+
+# 2. Select the a sample as reference, and detect peak position basing on ms1
+swath_ref_ms1_eics <- swath_files_ms1_eics[[1]]
+swath_ref_ms2 <- swath_files_ms2[[1]]
+swath_ref_peaks <- getIsoPeaks(swath_ref_ms1_eics)
+
+# 3. Define the peak position and bounds based on the peak detection results, and find the m/z of the fragment ions
+tar_position <- 282; tar_left <- 277.9; tar_right <- 288.5
+swath_mz <- getSwathMz(swath_ref_ms2, tar_position, ppm)
+
+# 4. Get the EICs based on the m/z of fragment ions
+swath_files_ms2_eics <- lapply(swath_files_ms2, function(f){
+  getSwathEICs(f, swath_mz, ppm)
+})
+
+```
+
+### Refine fragment ions based in peak profiles.
+Generally, the fragment ions are produced at the same time as the precursor ion, therefore, the peak profiles of the fragment ions should be similar to the profile of the precursor ion. TarMet refine the EICs based on correlation between the fragment ions and the precursor ion. The codes are:
+```{r frag_refine, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
+
+```
+
+=======
+>>>>>>> master
 

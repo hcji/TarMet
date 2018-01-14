@@ -1,79 +1,76 @@
-data("isotopes", package = "enviPat")
-data("adducts", package = "enviPat")
-
 navbarPage(
   "Targeted Bio-Mass Analyzer",
   
-  tags$head(
-    tags$link(
-      rel = "icon", 
-      type = "image/x-icon", 
-      href = "http://localhost:1984/default.ico")
-  ),
-  
   tabPanel(
-    'Isotopic Analysis',
-    titlePanel("Isotopic Analysis"),
+    'Isotopologues Analysis',
+    titlePanel("Isotopologues Analysis"),
     sidebarLayout(
       sidebarPanel(
-        fileInput('file', 'Choose one of your raw MS or Swtch-MS data files'),
+        fileInput('iso_files', 'Choose multiple raw data files', multiple=TRUE),
+        uiOutput('iso_ctrl_sample'),
         
         h4('Metabolite Information'),
-        selectInput('target_select', 'How to define the targeted metabolite ?', c('formula', 'm/z of ion')),
-        uiOutput('formula_contral'),
-        actionButton("button_formula", "Confirm"),
-        
-        h4('Isotopic Information (only used when the formula is given)'),
-        numericInput('threshold', 'Input the threshold of the relative abundance of isotopic peaks', 0.001),
-        numericInput('nmax', 'Input n, where at most M+n isotopologues are detected.', 3),
-        
+        selectInput('iso_target_select', 'How to define the targeted metabolite ?', c('formula', 'm/z of ion')),
+        uiOutput('iso_ctrl_target'),
+        actionButton('iso_target_button', 'Confirm'),
+
         h4('EIC Information'),
-        numericInput('ppm', 'Input the tolerance of the m/z difference (ppm)', 100),
-        uiOutput('rtControl'),
-        selectInput('ifsmooth', 'Select wether the baselines are removed or not', c(TRUE, FALSE)),
-        
+        numericInput('iso_ppm', 'Input the tolerance of the m/z difference (ppm)', 50),
+        uiOutput('iso_ctrl_rt'),
+        selectInput('iso_baseline', 'Select wether the baselines are removed or not', c(TRUE, FALSE)),
+
         h4('Peak Detection Information'),
-        numericInput('SNR.Th', 'Input the minimum SNR of peaks', 5),
-        numericInput('peakScaleRange', 'Input the scale range of the peak', 5),
-        numericInput('peakThr', 'Input the minimal absolute intensity (above the baseline) of peaks to be picked', 0),
-        uiOutput('targetControl')
+        numericInput('iso_peak_snr.th', 'Input the minimum SNR of peaks', 5),
+        numericInput('iso_peak_scale.th', 'Input the scale range of the peak (s)', 5),
+        numericInput('iso_peak_int.th', 'Input the minimal absolute intensity (above the baseline) of peaks to be picked', 0),
+
+        h4('Target Peak Defination'),
+        uiOutput('iso_ctrl_targetRT'),
+        
+        h4('Alignment Information'),
+        selectInput('iso_align', 'Select wether the EICs are aligned across samples or not', c(TRUE, FALSE)),
+        numericInput('iso_align.shift', 'Input the maximum retention time of shift (s)', 20),
+        numericInput('iso_align.seg', 'Input the size of segment of PAFFT (s)', 20)
         
       ),
       
       mainPanel(
-        h4('Extracted EICs'),
-        plotlyOutput('EICPlot'),
+        h3('Isotopologues Analysis Result of Reference Sample'),
+        h4('Isotopologues EICs'),
+        plotlyOutput('iso_eic_plot'),
         h4('Peak Information'),
-        tableOutput('PeakInfo'),
-        tableOutput('PeakArea')
+        tableOutput('iso_peak_info'),
+        tableOutput('iso_peak_area'),
+        h3('Quantitative Analysis Result of All Samples'),
+        h4('EICs of targeted isotopologues of samples'),
+        plotlyOutput('iso_files_EIC_Plot'),
+        h4('Peak areas of targeted isotopologues of samples'),
+        tableOutput('iso_files_peaks')
       )
     )
+<<<<<<< HEAD
   ),
   
   tabPanel(
-    "Quantitative Analysis",
-    titlePanel("Quantitative Analysis"),
+    'Swath-MS Analysis',
+    titlePanel("Swath-MS Analysis"),
     sidebarLayout(
       sidebarPanel(
-        fileInput('files', 'Choose multiple raw data files', multiple=TRUE),
+        h4('Swath-MS Information'),
+        numericInput('swath_ppm', 'Input the tolerance of the m/z difference (ppm)', 50),
         
-        h4('Alignment Information'),
-        selectInput('ifalign', 'Select wether the EICs are aligned across samples or not', c(TRUE, FALSE)),
-        numericInput('align.shift', 'Input the maximum retention time of shift (s)', 20),
-        numericInput('align.seg', 'Input the size of segment of PAFFT (s)', 20),
-        
-        h4('Isotope Information'),
-        uiOutput('EICs_Control'),
-        
-        h5('The other parameters are the same as the isotopic analysis step. If you want to change them, please go back to the last step.')
+        actionButton('swath_button', 'Confirm')
       ),
       
       mainPanel(
-        h4('Extracted EICs'),
-        plotlyOutput('EICPlots'),
-        h4('Quantitative Results'),
-        tableOutput('files_peaks')
+        
+        
       )
     )
   )
+  
+  
+=======
+  )
+>>>>>>> master
 )

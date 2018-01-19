@@ -195,7 +195,6 @@ integration <- function(x,yf){
   return(integral)
 }
 
-<<<<<<< HEAD
 plotEICs <- function(eics, peaks = NULL, Names = NULL, rt = NULL) {
   if (!is.null(rt)){
     eics <- lapply(eics, function(eic){
@@ -208,19 +207,6 @@ plotEICs <- function(eics, peaks = NULL, Names = NULL, rt = NULL) {
   p <- plot_ly() %>%
     layout(xaxis = list(tick0 = 0, title = 'Retention Time (s)'),
            yaxis = list(title = 'Intensity'))
-  if (is.null(Names)) {
-    Names <- paste('Trace', seq_along(eics))
-  }
-  for (f in seq_along(eics)) {
-    p <- add_trace(p, x = eics[[f]]$rt, y = eics[[f]]$intensity, mode='line', name = Names[f])
-  }
-  if (!is.null(peaks)){
-    eic <- eics[[1]]
-=======
-plotEICs <- function(eics, peaks = NULL, Names = NULL) {
-  p <- plot_ly() %>%
-    layout(xaxis = list(tick0 = 0, title = 'Retention Time (s)'),
-           yaxis = list(title = 'Intensity'))
   if (is.null(Names)){
     Names = paste('Mz: ',round(eics$mzs[,1],4), ' - ', round(eics$mzs[,2],4))
   }
@@ -229,7 +215,6 @@ plotEICs <- function(eics, peaks = NULL, Names = NULL) {
   }
   if (!is.null(peaks)){
     eic <- eics$eics[[1]]
->>>>>>> master
     p <- add_markers(p, x = eic$rt[peaks$Index$Position], y = eic$intensity[peaks$Index$Position], name = 'peak position', color = I('red'), marker = list(size = 5))
     p <- add_markers(p, x = eic$rt[c(peaks$Index$Start, peaks$Index$End)], y = eic$intensity[c(peaks$Index$Start, peaks$Index$End)], name = 'peak bound', color = I('blue'), marker = list(size = 5))
   }

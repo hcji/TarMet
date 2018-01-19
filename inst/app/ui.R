@@ -48,29 +48,5 @@ navbarPage(
         tableOutput('iso_files_peaks')
       )
     )
-<<<<<<< HEAD
-  ),
-  
-  tabPanel(
-    'Swath-MS Analysis',
-    titlePanel("Swath-MS Analysis"),
-    sidebarLayout(
-      sidebarPanel(
-        h4('Swath-MS Information'),
-        numericInput('swath_ppm', 'Input the tolerance of the m/z difference (ppm)', 50),
-        
-        actionButton('swath_button', 'Confirm')
-      ),
-      
-      mainPanel(
-        
-        
-      )
-    )
   )
-  
-  
-=======
-  )
->>>>>>> master
 )

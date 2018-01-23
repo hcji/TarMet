@@ -81,7 +81,7 @@ For a set of samples, the EICs are obtained by
 ```{r get_eic_files, eval=TRUE, cache=TRUE, message=FALSE, warning=FALSE}
 mzrange <- eics$mzs[1, ] # choose the first isotope feature, it can be adjusted in the app. 
 files_eics <- lapply(rawfiles, function(raw){
-  getEIC.mz(raw, c(0, Inf), mzrange)
+  getEIC(raw, c(0, Inf), mzrange)
 })
 ```
 Usually, retention time of the same metabolite may differs between different samples. You can choose whether to correct the time shift. If you choose to align the samples, you should also give the maximum tolerence time shifts. TarMet do this step with the following code:

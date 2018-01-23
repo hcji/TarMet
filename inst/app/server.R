@@ -112,7 +112,7 @@ function(input, output) {
     peaks <- iso_peaks()
     Names <- apply(eics$mzs, 1, function(mz){paste(round(mz[1],4), '-',round(mz[2], 4))})
     withProgress(message = 'Creating EIC Plot', value = 0.5, {
-      p <- plotEICs(eics$eics, peaks = peaks, Names = Names)
+      p <- plotEICs(eics, peaks = peaks, Names = Names)
     })
     p
   })
@@ -175,7 +175,7 @@ function(input, output) {
     
     rt <- iso_ref_eic()$eics[[1]]$rt
     withProgress(message = 'Creating plot', value = 0.5, {
-      p <- plotEICs(files_eics, peaks = NULL, Names = Names)
+      p <- plotEICs(list(eics = files_eics), peaks = NULL, Names = Names)
       p <- add_markers(p, x = rt[c(peaks$Index$Start, peaks$Index$End)], y = rep(0, 2*length(peaks$Index$End)), name = 'peak bound', color = I('blue'), marker = list(size = 5))
     })
     p

@@ -30,8 +30,11 @@ navbarPage(
         h4('Alignment Information'),
         selectInput('iso_align', 'Select wether the EICs are aligned across samples or not', c(TRUE, FALSE)),
         numericInput('iso_align.shift', 'Input the maximum retention time of shift (s)', 20),
-        numericInput('iso_align.seg', 'Input the size of segment of PAFFT (s)', 20)
+        numericInput('iso_align.seg', 'Input the size of segment of PAFFT (s)', 20),
         
+        h4('Confirm the Result'),
+        actionButton('add_button', 'Add to List'),
+        downloadButton("iso_download", "Download")
       ),
       
       mainPanel(
@@ -48,5 +51,12 @@ navbarPage(
         tableOutput('iso_files_peaks')
       )
     )
+  ),
+  
+  tabPanel(
+    'Quantitative Result',
+    titlePanel("Quantitative Result"),
+    tableOutput('res_files_peaks'),
+    downloadButton("res_download", "Download")
   )
 )

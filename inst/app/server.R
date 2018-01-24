@@ -122,7 +122,7 @@ function(input, output) {
     peaks$PeakInfo
   })
 
-  output$iso_peak_area <- renderTable({
+  iso_peak_area0 <- reactive({
     peaks <- iso_peaks()
     eics <- iso_ref_eic()
     target_area <- getArea(eics, input$iso_target_left, input$iso_target_right)
@@ -134,6 +134,18 @@ function(input, output) {
     }
     as.data.frame(res)
   })
+  
+  output$iso_peak_area <- renderTable({
+    iso_peak_area0()
+  })
+  
+  output$iso_download <- downloadHandler(
+    filename = "isotopologues.csv",
+    content = function(file) {
+      write.csv(iso_peak_area0(), file, row.names = FALSE)
+    },
+    contentType = "text/csv"
+  )
   
   iso_files_eics <- reactive({
     rawfiles <- iso_raws()
@@ -181,18 +193,61 @@ function(input, output) {
     p
   })
   
-  output$iso_files_peaks <- renderTable({
+  iso_files_areas <- reactive({
     files_eics <- iso_files_eics()
-    Names <- iso_name_sample()
     Areas <- sapply(files_eics, function(eics){
       eics <- list(eics=list(eics))
       getArea(eics, input$iso_target_left, input$iso_target_right)
     })
     Areas <- round(Areas, 3)
+    Areas
+  })
+  
+  output$iso_files_peaks <- renderTable({
+    Names <- iso_name_sample()
+    Areas <- iso_files_areas()
     res <- cbind(Names, Areas)
     mzrange <- paste('mz:', round(iso_ref_eic()$mzs[input$iso_target_isotope, 1], 3), 
                      '-', round(iso_ref_eic()$mzs[input$iso_target_isotope, 2], 3))
     colnames(res) <- c('Names', mzrange) 
     res
   })
+  
+  quant_res <- reactiveVal(data.frame())
+  
+  quant_res_this <- reactive({
+    if (input$iso_target_select == 'formula') {
+      target <- input$iso_formula
+      type <- input$iso_adduct
+    } else {
+      target <- input$iso_fmz
+      type <- NA
+    }
+    rtmin <- input$iso_target_left
+    rtmax <- input$iso_target_right
+    mzmin <- round(iso_ref_eic()$mzs[input$iso_target_isotope, 1], 3)
+    mzmax <- round(iso_ref_eic()$mzs[input$iso_target_isotope, 2], 3)
+    areas <- iso_files_areas()
+    this <- cbind(target, type, rtmin, rtmax, mzmin, mzmax, t(areas))
+    colnames(this) <- c('target', 'type', 'rtmin', 'rtmax', 'mzmin', 'mzmax', iso_name_sample())
+    
+    this
+  })
+  
+  observeEvent(input$add_button,{
+    quant_res(rbind(quant_res(), quant_res_this()))
+  })
+  
+  output$res_files_peaks <- renderTable({
+    quant_res()
+  })
+  
+  output$res_download <- downloadHandler(
+    filename = "results.csv",
+    content = function(file) {
+      write.csv(quant_res(), file, row.names = FALSE)
+    },
+    contentType = "text/csv"
+  )
+  
 }

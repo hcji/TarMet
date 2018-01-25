@@ -117,32 +117,40 @@ function(input, output) {
     p
   })
 
-  output$iso_peak_info <- renderTable({
-    peaks <- iso_peaks()
-    peaks$PeakInfo
-  })
-
-  iso_peak_area0 <- reactive({
+  iso_peak_area_info <- reactive({
     peaks <- iso_peaks()
     eics <- iso_ref_eic()
     target_area <- getArea(eics, input$iso_target_left, input$iso_target_right)
     target_ratio <- target_area/max(target_area) * 100
-    res <- cbind(peaks$PeakArea, target_area, target_ratio)
+    areas <- cbind(peaks$PeakArea, target_area, target_ratio)
     if (input$iso_target_select == 'formula') {
-      theoretical_ration <- eics$pattern[,2]
-      res <- cbind(res, theoretical_ration)
+      theoretical_ratio <- eics$pattern[,2]
+      areas <- cbind(areas, theoretical_ratio)
+      
+      simis <- sapply(3:ncol(peaks$PeakArea), function(s){
+        getIsoSimi(peaks$PeakArea[,s], eics$pattern[,2])
+      })
     }
-    as.data.frame(res)
+    return(list(areas = areas, simis=simis))
+  })
+  
+  output$iso_peak_info <- renderTable({
+    peaks <- iso_peaks()
+    if (input$iso_target_select == 'formula'){
+      peaks$PeakInfo <- cbind(peaks$PeakInfo, iso_peak_area_info()$simis)
+      colnames(peaks$PeakInfo)[5] <- 'isotopic_similarity'
+    }
+    peaks$PeakInfo
   })
   
   output$iso_peak_area <- renderTable({
-    iso_peak_area0()
+    iso_peak_area_info()$areas
   })
   
   output$iso_download <- downloadHandler(
     filename = "isotopologues.csv",
     content = function(file) {
-      write.csv(iso_peak_area0(), file, row.names = FALSE)
+      write.csv(iso_peak_area_info()$areas(), file, row.names = FALSE)
     },
     contentType = "text/csv"
   )

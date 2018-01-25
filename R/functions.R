@@ -165,6 +165,17 @@ getArea <- function(eics, rtmin, rtmax, intensity = FALSE){
   return(areas)
 }
 
+getIsoSimi<- function(iso_int1, iso_int2) {
+  iso_int1 <- iso_int1/sum(iso_int1)
+  iso_int2 <- iso_int2/sum(iso_int2)
+  score_i <- sapply(seq_along(iso_int1), function(s){
+    (1-abs(iso_int1[s]-iso_int2[s])/iso_int2[s])*iso_int2[s]
+  })
+  score <- sum(score_i)
+  
+  return(score)
+}
+
 airPLS <- function(x,lambda=10,differences=1, itermax=20){
   
   x = as.vector(x)

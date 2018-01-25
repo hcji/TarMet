@@ -118,10 +118,8 @@ getIsoEIC.formula <- function(raw, formula, adduct = 'M+H', ppm = 50, rtrange = 
 
 getIsoPeaks <- function(eics, SNR.Th = 4, peakScaleRange = 5, peakThr = 0, userDefTime = NULL){
   peakScaleRange <- round(peakScaleRange/ mean(diff(eics$eics[[1]]$rt)))
-  ind <- which.max(sapply(eics$eics, function(s){
-    sum(s$intensity)
-  }))
-  eic <- eics$eics[[ind]]
+  eic_mat <- do.call(rbind, lapply(eics$eics, function(e) e$intensity))
+  eic <- list(rt=eics$eics[[1]]$rt, intensity=apply(eic_mat, 2, max))
   if (sum(eic$intensity)==0) return(NULL)
   MajorPeaks <- peakDetectionCWT(eic$intensity, scales = c(1, seq(2, round(0.05*length(eic$intensity)), 2)), SNR.Th = SNR.Th, peakScaleRange = peakScaleRange, peakThr = peakThr)
   if (length((MajorPeaks$majorPeakInfo$peakIndex)) < 1) {return(NULL)}
@@ -225,10 +223,8 @@ plotEICs <- function(eics, peaks = NULL, Names = NULL, rt = NULL) {
     p <- add_trace(p, x = eics$eics[[f]]$rt, y = eics$eics[[f]]$intensity, mode='line', name = paste(Names[f]))
   }
   if (!is.null(peaks)){
-    ind <- which.max(sapply(eics$eics, function(s){
-      sum(s$intensity)
-    }))
-    eic <- eics$eics[[ind]]
+    eic_mat <- do.call(rbind, lapply(eics$eics, function(e) e$intensity))
+    eic <- list(rt=eics$eics[[1]]$rt, intensity=apply(eic_mat, 2, max))
     p <- add_markers(p, x = eic$rt[peaks$Index$Position], y = eic$intensity[peaks$Index$Position], name = 'peak position', color = I('red'), marker = list(size = 5))
     p <- add_markers(p, x = eic$rt[c(peaks$Index$Start, peaks$Index$End)], y = eic$intensity[c(peaks$Index$Start, peaks$Index$End)], name = 'peak bound', color = I('blue'), marker = list(size = 5))
   }

@@ -123,6 +123,7 @@ function(input, output) {
     target_area <- getArea(eics, input$iso_target_left, input$iso_target_right)
     target_ratio <- target_area/max(target_area) * 100
     areas <- cbind(peaks$PeakArea, target_area, target_ratio)
+    simis <- NULL
     if (input$iso_target_select == 'formula') {
       theoretical_ratio <- eics$pattern[,2]
       areas <- cbind(areas, theoretical_ratio)

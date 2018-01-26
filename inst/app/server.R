@@ -151,7 +151,7 @@ function(input, output) {
   output$iso_download <- downloadHandler(
     filename = "isotopologues.csv",
     content = function(file) {
-      write.csv(iso_peak_area_info()$areas(), file, row.names = FALSE)
+      write.csv(iso_peak_area_info()$areas, file, row.names = FALSE)
     },
     contentType = "text/csv"
   )

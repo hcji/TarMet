@@ -37,7 +37,7 @@ The peak detection is based on *MassSpecWavelet package*. Three parameters shoul
 ![](images/figure_2.png)
 
 ## Results of isotopologues analysis
-First, the EICs of all of the isotopologues will be shown in the main panel after you click the *Confirm* button. The peak position and bounds will also be shown like the figure below. 
+First, the EICs of all of the isotopologues will be shown in the main panel after you click the *Confirm* button. The peak position and bounds will also be shown like the figure below.
 ![](images/figure_3.png)
 The information of the peaks will also be shown below the EIC plot, which including the exact value of peak position and the bounds, the m/z values of isotopologues, and the peak areas. The theoretical isotopic pattern, real relative ratio of isotopologues and their similarity will also be given. If more than one peak is detected, this can be used for assist the user confirm which peak is belonging to the target metabolite.  
 ![](images/figure_4.png)
@@ -59,7 +59,7 @@ Once the results are obtained, you can click the *Download* button at the bottom
 
 # Isotopic Tracer Analysis
 ## Definition
-[Cellular metabolites dataset](https://gitlab.com/jimiwills/assay.R/) is used for an example. In the dataset the glucose and the related metabolites were traced by 13C. So, we input the maximum 13C number as 6, and the other stable isotopic atom as 0. We first input the m/z value of *M+H* adduct of glucose, which is 179.0561 
+[Cellular metabolites dataset](https://gitlab.com/jimiwills/assay.R/) is used for an example. In the dataset the glucose and the related metabolites were traced by 13C. So, we input the maximum 13C number as 6, and the other stable isotopic atom as 0. We first input the m/z value of *M+H* adduct of glucose, which is 179.0561.
 ![](images/figure_9.png)
 
 ## EIC extraction and peak detection

@@ -125,7 +125,7 @@ getIsoPeaks <- function(eics, SNR.Th = 4, peakScaleRange = 5, peakThr = 0, userD
   if (length((MajorPeaks$majorPeakInfo$peakIndex)) < 1) {return(NULL)}
   PeakWidths <- widthEstimationCWT(eic$intensity, MajorPeaks$majorPeakInfo)
   
-  Position <- MajorPeaks$majorPeakInfo$peakIndex
+  Position <- unique(MajorPeaks$majorPeakInfo$peakIndex)
   Start <- sapply(2:length(PeakWidths), function(s){
     PeakWidths[[s]][1]
   })

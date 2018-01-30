@@ -147,16 +147,11 @@ getIsoPeaks <- function(eics, SNR.Th = 4, peakScaleRange = 5, peakThr = 0, userD
   return(list(PeakInfo = PeakInfo, PeakArea = PeakArea, Index = Index))
 }
 
-getArea <- function(eics, rtmin, rtmax, intensity = FALSE){
+getArea <- function(eics, rtmin, rtmax){
   areas <- sapply(eics$eics, function(eic){
     Start <- findInterval(rtmin, eic$rt)+1
     End <- findInterval(rtmax, eic$rt)
-    if (intensity == TRUE){
-      Area <- max(eic$intensity[Start:End])
-    } else {
-      Area <- integration(eic$rt[Start:End], eic$intensity[Start:End])
-    }
-    
+    Area <- integration(eic$rt[Start:End], eic$intensity[Start:End])
     Area
   })
   

@@ -8,7 +8,7 @@ Get EIC of isotopic features.
 Get EIC of isotopic features.
 }
 \usage{
-getIsoEIC.formula(raw, formula, nmax = 3, adduct = "M+H", ppm = 50, rtrange = c(0, Inf), threshold = 0.01)
+getIsoEIC.formula(raw, formula, adduct = "M+H", ppm = 50, rtrange = c(0, Inf), threshold = 0.01, resolution = 50000)
 }
 
 \arguments{
@@ -17,9 +17,6 @@ Result obtain by \code{LoadData}
 }
   \item{formula}{
 A chemical formula
-}
-  \item{nmax}{
-n, where at maximum M+n isotopes are count.
 }
   \item{adduct}{
 The species of adduct.
@@ -32,6 +29,9 @@ Rt range of EIC.
 }
   \item{threshold}{
 The relative intensity threshold of isotope, from 0 to 1.
+}
+  \item{resolution}{
+The resolution of your MS.
 }
 }
 

@@ -8,7 +8,7 @@ Plot EICs of objects.
 Plot EICs of objects.
 }
 \usage{
-plotEICs(eics, peaks = NULL, Names = NULL)
+plotEICs(eics, peaks = NULL, Names = NULL, rt=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,6 +20,9 @@ Peak detection results or NULL
 }
   \item{Names}{
 Names of traces or NULL
+}
+  \item{rt}{
+Range of retention time to be plot.
 }
 }
 

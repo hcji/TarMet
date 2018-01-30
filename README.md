@@ -5,7 +5,7 @@ TarMet is a shiny application for targeted metabolic analyses based on mass spec
 
 ### Released version (suggested)
 
-Download the source package at [url](https://github.com/hcji/TarMet/archive/1.0.1.tar.gz) and install the package locally.
+Download the source package at [url](https://github.com/hcji/TarMet/releases) and install the package locally.
 
 ### Development version
 

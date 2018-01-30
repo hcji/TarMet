@@ -8,7 +8,7 @@ Get the theoretical isotope pattern.
 Get the theoretical isotope pattern.
 }
 \usage{
-getIsoPat(formula, d, threshold)
+getIsoPat(formula, d, threshold, resolution)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,6 +20,9 @@ The species of adduct
 }
   \item{threshold}{
 The relative intensity threshold, from 0 to 1.
+}
+  \item{resolution}{
+The resolution of your MS.
 }
 }
 

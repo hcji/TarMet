@@ -58,6 +58,7 @@ function(input, output) {
   })
 
   output$iso_ctrl_rt <-  renderUI({
+    req(input$iso_files)
     raw_data <- iso_raws()[[1]]
     tagList(
       numericInput('iso_eic_left', 'Input the start retention time', min(raw_data$times)),
@@ -244,7 +245,9 @@ function(input, output) {
   })
   
   observeEvent(input$add_button,{
-    quant_res(rbind(quant_res(), quant_res_this()))
+    withProgress(message = 'Successful', value = 0.3, {
+      quant_res(rbind(quant_res(), quant_res_this()))
+    })
   })
   
   output$res_files_peaks <- renderTable({

@@ -24,7 +24,7 @@ navbarPage(
         numericInput('iso_peak_scale.th', 'Input the scale range of the peak (s)', 5),
         numericInput('iso_peak_int.th', 'Input the minimal absolute intensity (above the baseline) of peaks to be picked', 0),
 
-        h4('Target Peak Defination'),
+        h4('Target Peak Definition'),
         uiOutput('iso_ctrl_targetRT'),
         
         h4('Alignment Information'),

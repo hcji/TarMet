@@ -22,17 +22,15 @@ function(input, output) {
   })
 
   output$iso_ctrl_target <- renderUI({
-    if (input$iso_target_select == 'formula') {
+    if (input$iso_target_select == 'YES'){
       tagList(
         textInput('iso_formula', 'Input the targeted metabolite'),
         selectInput('iso_adduct', 'Select the type of adduct', choices = list(
           Positive = adducts$Name[adducts$Ion_mode == 'positive'],
           Negative = adducts$Name[adducts$Ion_mode == 'negative']
-        )),
-        numericInput('iso_resolution', 'Input the resolution of your MS', 50000),
-        numericInput('iso_threshold', 'Input the threshold of the relative abundance of isotopic peaks', 0.001)
+        ))
       )
-    }else if (input$iso_target_select == 'm/z of ion'){
+    } else if (input$iso_target_select == 'NO'){
       tagList(
         numericInput('iso_fmz', 'Input the monoisotopic mass of the targeted ion of metabolite', 0),
         numericInput('iso_fcharge', 'Input the number of charge of ion', 1),
@@ -44,6 +42,28 @@ function(input, output) {
         numericInput('iso_S34', 'Input the maximum number of S34 to be considered.', 0)
       )
     }
+  })
+  
+  output$iso_ctrl_tracer1 <- renderUI({
+    req(input$iso_formula)
+    if (input$iso_target_select == 'YES' && input$iso_assay_type == 'targeted analysis'){
+      tagList(
+        numericInput('iso_resolution', 'Input the resolution of your MS', 50000),
+        numericInput('iso_threshold', 'Input the threshold of the relative abundance of isotopic peaks', 0.001)
+      )
+    } else if (input$iso_target_select == 'YES' && input$iso_assay_type == 'isotopic tracer'){
+      tagList(
+        selectInput('iso_tracer_element', 'Select the element of isotopic tracer', getElements(input$iso_formula))
+      )
+    }
+  })
+  output$iso_ctrl_tracer2 <- renderUI({
+    req(input$iso_tracer_element)
+    tagList(
+      selectInput('iso_tracer_isotope', 'Select the isotope of tracer', isotopes$isotope[isotopes$element == input$iso_tracer_element][-1]),
+      numericInput('iso_tracer_number', 'Input n, where at most M+n isotopologues are detected.', min(3, getElementNum(input$iso_formula, input$iso_tracer_element)), 
+                   min = 1, max = getElementNum(input$iso_formula, input$iso_tracer_element))
+    )
   })
 
   iso_raws <- reactive({
@@ -70,15 +90,20 @@ function(input, output) {
     withProgress(message = 'Extracting EICs', value = 0.5, {
       ind <- which(iso_name_sample() == input$iso_name_sample)
       raw_data <- iso_raws()[[ind]]
-      if (input$iso_target_select == 'formula') {
+      if (input$iso_target_select == 'YES' && input$iso_assay_type == 'targeted analysis') {
         eics <- getIsoEIC.formula(raw_data, input$iso_formula, adduct = input$iso_adduct,
                                   ppm = input$iso_ppm, rtrange = c(input$iso_eic_left, input$iso_eic_right),
                                   threshold = input$iso_threshold, resolution = input$iso_resolution)
-      } else if (input$iso_target_select == 'm/z of ion'){
+      } else if (input$iso_target_select == 'YES' && input$iso_assay_type == 'isotopic tracer'){
+        eics <- getIsoEIC.tracer(raw_data, input$iso_formula, adduct = input$iso_adduct,
+                                 ppm = input$iso_ppm, rtrange = c(input$iso_eic_left, input$iso_eic_right),
+                                 element = input$iso_tracer_element, isotope = input$iso_tracer_isotope, 
+                                 number = input$iso_tracer_number)
+      } else if (input$iso_target_select == 'NO'){
         eics <- getIsoEIC.mz(raw_data, input$iso_fmz, nmax = input$iso_nmax, ppm = input$iso_ppm,
                              rtrange = c(input$iso_eic_left, input$iso_eic_right), charge = input$iso_fcharge,
-                             C13 = input$iso_C13, H2 = input$iso_H2, O18 = input$iso_O18, N15 = input$iso_N15,
-                             S34 = input$iso_S34)
+                             elements = c('C','H','O','N','S'), isotope = c('13C', '2H', '18O', '15N', '34S'), 
+                             numbers = c(input$iso_C13, input$iso_H2, input$iso_O18, input$iso_N15, input$iso_S34))
       }
       if (input$iso_baseline){
         eics$eics <- lapply(eics$eics, function(eic){
@@ -125,7 +150,7 @@ function(input, output) {
     target_ratio <- target_area/max(target_area) * 100
     areas <- cbind(peaks$PeakArea, target_area, target_ratio)
     simis <- NULL
-    if (input$iso_target_select == 'formula') {
+    if (input$iso_target_select == 'YES' && input$iso_assay_type == 'targeted analysis') {
       theoretical_ratio <- eics$pattern[,2]
       areas <- cbind(areas, theoretical_ratio)
       
@@ -138,7 +163,7 @@ function(input, output) {
   
   output$iso_peak_info <- renderTable({
     peaks <- iso_peaks()
-    if (input$iso_target_select == 'formula'){
+    if (input$iso_target_select == 'YES' && input$iso_assay_type == 'targeted analysis'){
       peaks$PeakInfo <- cbind(peaks$PeakInfo, iso_peak_area_info()$simis)
       colnames(peaks$PeakInfo)[5] <- 'isotopic_similarity'
     }
@@ -226,7 +251,7 @@ function(input, output) {
   quant_res <- reactiveVal(data.frame())
   
   quant_res_this <- reactive({
-    if (input$iso_target_select == 'formula') {
+    if (input$iso_target_select == 'YES') {
       target <- input$iso_formula
       type <- input$iso_adduct
     } else {

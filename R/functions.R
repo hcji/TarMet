@@ -71,18 +71,32 @@ getIsoPat <- function(formula, d, threshold, resolution){
   return(as.data.frame(pattern))
 }
 
+getElements <- function(formula) {
+  formula <- rcdk::get.formula(formula)
+  return(formula@isotopes[,1])
+}
+
+getElementNum <- function(formula, element){
+  formula <- rcdk::get.formula(formula)
+  return(as.numeric(formula@isotopes[formula@isotopes[,1] == element, 2]))
+}
+
 getIsoEIC.mz <- function(raw, fmz, nmax = 4, ppm = 50, rtrange = c(0, Inf), charge = 1,
-                         C13 = 3, H2 = 0, O18 = 0, N15 = 0, S34 = 0){
-  
-  mass <- (0:C13 * 1.003355)
-  mass <- unlist(lapply(0:H2 * 1.006277, function(s) s+mass))
-  mass <- unlist(lapply(0:O18 * 2.004245, function(s) s+mass))
-  mass <- unlist(lapply(0:N15 * 0.997035, function(s) s+mass))
-  mass <- unlist(lapply(0:S34 * 1.995796, function(s) s+mass))
+                         elements = NULL, isotope = NULL, numbers = NULL){
+  data("isotopes", package = "enviPat")
+  fmass <- fmz * charge
+  mass <- 0
+  if (!is.null(elements) && length(elements)==length(numbers) && length(elements) == length(isotope)) {
+    for (i in seq_along(elements)) {
+      m1 <- isotopes$mass[elements[i] == isotopes$element][1]
+      m2 <- isotopes$mass[isotope[i] == isotopes$isotope][1]
+      mass <- unlist(lapply(0:numbers[i] * (m2 - m1), function(s) s+mass))
+    }
+  }
   mass <- mass[mass < (nmax + 0.1)]
   mass <- sort(mass)
-
-  mzs <- (fmz + mass)/charge
+  
+  mzs <- (fmass + mass)/charge
   remain <- diff(mzs)/mzs[-1]*10^6 > 0.5 * ppm
   mzs <- mzs[remain]
   
@@ -94,6 +108,21 @@ getIsoEIC.mz <- function(raw, fmz, nmax = 4, ppm = 50, rtrange = c(0, Inf), char
   })
   
   return(list(mzs = mzranges, eics = eics))
+}
+
+getIsoEIC.tracer <- function(raw, formula, adduct = 'M+H', ppm = 50, rtrange = c(0, Inf), element = 'C', isotope = '13C', number = 3) {
+  data("adducts", package = "enviPat")
+  adduct <- which(adduct == adducts$Name)
+  
+  mass <- rcdk::get.formula(formula)@mass
+  mass <- (mass + adducts$Mass[adduct])
+  charge <- abs(adducts$Charge[adduct])
+  fmz <- mass / charge
+  
+  output <- getIsoEIC.mz(raw, fmz, nmax = number, ppm = ppm, rtrange = rtrange, charge = charge,
+                         elements = element, isotope = isotope, numbers = number)
+  
+  return(output)
 }
 
 getIsoEIC.formula <- function(raw, formula, adduct = 'M+H', ppm = 50, rtrange = c(0, Inf), threshold = 0.01, resolution = 50000){

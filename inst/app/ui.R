@@ -10,8 +10,11 @@ navbarPage(
         uiOutput('iso_ctrl_sample'),
         
         h4('Metabolite Information'),
-        selectInput('iso_target_select', 'How to define the targeted metabolite ?', c('formula', 'm/z of ion')),
+        selectInput('iso_target_select', 'If the formula of targeted metabolite is known ?', c('YES', 'NO')),
+        selectInput('iso_assay_type', 'Select the type of the assay', c('targeted analysis', 'isotopic tracer')),
         uiOutput('iso_ctrl_target'),
+        uiOutput('iso_ctrl_tracer1'),
+        uiOutput('iso_ctrl_tracer2'),
         actionButton('iso_target_button', 'Confirm'),
 
         h4('EIC Information'),

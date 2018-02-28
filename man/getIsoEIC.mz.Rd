@@ -8,9 +8,7 @@ Get EIC of isotopic features.
 Get EIC of isotopic features.
 }
 \usage{
-getIsoEIC.mz(raw, fmz, nmax = 4, ppm = 50, rtrange = c(0, Inf),
-                 charge = 1, C13 = 3, H2 = 0, O18 = 0, N15 = 0, S34 =
-                 0)
+getIsoEIC.mz(raw, fmz, nmax = 4, ppm = 50, rtrange = c(0, Inf), charge = 1, elements = NULL, isotope = NULL, numbers = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -32,34 +30,17 @@ Rt range of EIC.
   \item{charge}{
 The number of charge of ion
 }
-  \item{C13}{
-The maximum number of C13 atom.
-}
-  \item{H2}{
-The maximum number of H2 atom.
-}
-  \item{O18}{
-The maximum number of O18 atom.
-}
-  \item{N15}{
-The maximum number of N15 atom.
-}
-  \item{S34}{
-The maximum number of S34 atom.
-}
-}
 
+  \item{elements}{
+The type of elements
+}
+  \item{isotope}{
+The isotopes of elements to be considered
+}
+  \item{numbers}{
+n, where at maximum M+n isotopes are count.
+}
+}
 \value{
   A list of EICs of isotopic features.
 }
-
-\examples{
-library(mtbls2)
-filepath <- file.path(find.package("mtbls2"), "mzData")
-files <- file.path(filepath, list.files(filepath, recursive = TRUE))[1:3]
-file1 <- files[1]
-raw <- LoadData(file1)
-
-eics <- getIsoEIC.mz(raw, fmz= 200.04)
-}
-

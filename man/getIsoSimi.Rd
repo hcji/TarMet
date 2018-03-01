@@ -13,10 +13,10 @@ getIsoSimi(iso_int1, iso_int2)
 
 \arguments{
   \item{iso_int1}{
-The first isotopic pattern.
+The detected isotopic pattern.
 }
   \item{iso_int2}{
-The second isotopic pattern.
+The real isotopic pattern.
 }
 }
 

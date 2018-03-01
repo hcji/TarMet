@@ -188,8 +188,8 @@ getArea <- function(eics, rtmin, rtmax){
 }
 
 getIsoSimi<- function(iso_int1, iso_int2) {
-  iso_int1 <- iso_int1/sum(iso_int1)
-  iso_int2 <- iso_int2/sum(iso_int2)
+  iso_int1 <- (iso_int1/sum(iso_int1)) [iso_int2!=0]
+  iso_int2 <- (iso_int2/sum(iso_int2)) [iso_int2!=0]
   score_i <- sapply(seq_along(iso_int1), function(s){
     (1-abs(iso_int1[s]-iso_int2[s])/iso_int2[s])*iso_int2[s]
   })

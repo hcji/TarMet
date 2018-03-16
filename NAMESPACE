@@ -12,4 +12,6 @@ exportPattern("runTarMet",
               "airPLS", 
               "integration", 
               "PAFFT",
+              "getElements",
+              "getElementNum",
               "plotEICs")

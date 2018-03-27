@@ -1,17 +1,33 @@
 import("mzR", "data.table", "enviPat", "Matrix", "shiny", "plotly", "MassSpecWavelet")
-exportPattern("runTarMet", 
-              "LoadData", 
-              "getEIC", 
-              "getIsoPat", 
-              "getIsoEIC.formula",
-              "getIsoEIC.tracer",
-              "getIsoEIC.mz",
-              "getIsoPeaks", 
-              "getIsoSimi",
-              "getArea", 
-              "airPLS", 
-              "integration", 
-              "PAFFT",
+exportPattern("runTarMet",
+              
+              # INPUT FUNCTIONS
+              "getSampleName",
+              "getCandidateFormula",
+              "getTargets",
               "getElements",
               "getElementNum",
+              
+              # DATA PROCESS FUNCTIONS
+              "LoadData", 
+              "getEIC", 
+              "getIsotopicPattern",
+              "getMzWithTracer",
+              "getMzRanges",
+              "getMzEICs",
+              
+              # PEAK DETECTION
+              "getIsotopicPeaks",
+              "getArea",
+              "getIsotopicSimilarity",
+              "widthEstimationCWT",
+              "extendNBase",
+              "extendLength",
+              "integration",
+              
+              # BASELINE
+              "airPLS",
+              "WhittakerSmooth",
+              
+              # PLOT
               "plotEICs")

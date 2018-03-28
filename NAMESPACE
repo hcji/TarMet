@@ -29,5 +29,11 @@ exportPattern("runTarMet",
               "airPLS",
               "WhittakerSmooth",
               
+              # ALIGNMENT
+              "getAlignedEICs",
+              "PAFFT",
+              "getQuantifiedResult",
+              
               # PLOT
-              "plotEICs")
+              "plotEICs",
+              "plotStackBar")

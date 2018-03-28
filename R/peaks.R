@@ -32,15 +32,18 @@ getIsotopicPeaks <- function(eics, SNR.Th = 4, peakScaleRange = 5, peakThr = 0, 
   }
   PeakArea <- as.data.frame(cbind(names(eics), round(Area,2)))
   colnames(PeakArea) <- c('MzRange', paste('Peak', 1:length(Position)))
-  PeakInfo <- as.data.frame(cbind(paste('Peak', 1:length(Position)), eic$rt[Position], eic$rt[Start], eic$rt[End], Similarity))
-  colnames(PeakInfo) <- c(' ', 'Position', 'Start', 'End', 'Similarity')
-  Index <- as.data.frame(cbind(Position, Start, End))
+  PeakInfo <- data.frame(Name = paste('Peak', 1:length(Position)), 
+                         Position = eic$rt[Position], 
+                         Start = eic$rt[Start], 
+                         End = eic$rt[End], 
+                         Similarity = Similarity)
+  Index <- data.frame(Position=Position, Start=Start, End=End)
   
   return(list(PeakInfo = PeakInfo, PeakArea = PeakArea, Index = Index))
 }
 
 getArea <- function(eics, rtmin, rtmax){
-  areas <- sapply(eics$eics, function(eic){
+  areas <- sapply(eics, function(eic){
     Start <- findInterval(rtmin, eic$rt)+1
     End <- findInterval(rtmax, eic$rt)
     Area <- integration(eic$rt[Start:End], eic$intensity[Start:End])

@@ -1,65 +1,72 @@
-navbarPage(
-  "Targeted Bio-Mass Analyzer",
-  
-  tabPanel(
-    'Isotopologues Analysis',
-    titlePanel("Isotopologues Analysis"),
-    sidebarLayout(
-      sidebarPanel(
-        fileInput('iso_files', 'Choose multiple raw data files', multiple=TRUE),
-        uiOutput('iso_ctrl_sample'),
-        
-        h4('Metabolite Information'),
-        selectInput('iso_target_select', 'If the formula of targeted metabolite is known ?', c('YES', 'NO')),
-        selectInput('iso_assay_type', 'Select the type of the assay', c('targeted analysis', 'isotopic tracer')),
-        uiOutput('iso_ctrl_target'),
-        uiOutput('iso_ctrl_tracer1'),
-        uiOutput('iso_ctrl_tracer2'),
-        actionButton('iso_target_button', 'Confirm'),
+library(shiny)
+library(plotly)
 
-        h4('EIC Information'),
-        numericInput('iso_ppm', 'Input the tolerance of the m/z difference (ppm)', 50),
-        uiOutput('iso_ctrl_rt'),
-        selectInput('iso_baseline', 'Select wether the baselines are removed or not', c(TRUE, FALSE)),
+data("isotopes", package = "enviPat")
+data("adducts", package = "enviPat")
 
-        h4('Peak Detection Information'),
-        numericInput('iso_peak_snr.th', 'Input the minimum SNR of peaks', 5),
-        numericInput('iso_peak_scale.th', 'Input the scale range of the peak (s)', 5),
-        numericInput('iso_peak_int.th', 'Input the minimal absolute intensity (above the baseline) of peaks to be picked', 0),
-
-        h4('Target Peak Definition'),
-        uiOutput('iso_ctrl_targetRT'),
-        
-        h4('Alignment Information'),
-        selectInput('iso_align', 'Select wether the EICs are aligned across samples or not', c(TRUE, FALSE)),
-        numericInput('iso_align.shift', 'Input the maximum retention time of shift (s)', 20),
-        numericInput('iso_align.seg', 'Input the size of segment of PAFFT (s)', 20),
-        
-        h4('Confirm the Result'),
-        actionButton('add_button', 'Add to List'),
-        downloadButton("iso_download", "Download")
-      ),
-      
-      mainPanel(
-        h3('Isotopologues Analysis Result of Reference Sample'),
-        h4('Isotopologues EICs'),
-        plotlyOutput('iso_eic_plot'),
-        h4('Peak Information'),
-        tableOutput('iso_peak_info'),
-        tableOutput('iso_peak_area'),
-        h3('Quantitative Analysis Result of All Samples'),
-        h4('EICs of targeted isotopologues of samples'),
-        plotlyOutput('iso_files_EIC_Plot'),
-        h4('Peak areas of targeted isotopologues of samples'),
-        tableOutput('iso_files_peaks')
-      )
+shinyUI(fluidPage(
+  titlePanel(img(src="logo.png", width="20%"), "TarMet"),
+  sidebarLayout(
+    sidebarPanel(width = 3,
+                 fileInput('files', 'Choose multiple raw data files', multiple=TRUE),
+                 numericInput('resolution', 'Input the resolution of your MS instrument', 50000),
+                 uiOutput('sampleCtrl'),
+                 selectInput('input', 'Select how to input the target compounds', c('config file', 'direct')),
+                 selectInput('type', 'Select the type of the assay', c('targeted analysis', 'isotopic tracer')),
+                 selectInput('define', 'Select how to define the target compound', c('formula','mass-to-charge')),
+                 selectInput('adduct', 'Select the adduct type', choices = list(
+                   Positive = adducts$Name[adducts$Ion_mode == 'positive'],
+                   Negative = adducts$Name[adducts$Ion_mode == 'negative']
+                 )),
+                 uiOutput('targetCtrl1'),
+                 uiOutput('targetCtrl2'),
+                 uiOutput('formulaCtrl'),
+                 uiOutput('tracerCtrl1'),
+                 uiOutput('tracerCtrl2'),
+                 actionButton('confirm', 'Confirm')
+                 ),
+                 
+    mainPanel(
+      tabsetPanel(id = "tabs",
+                  tabPanel('Isotopologues Analysis',
+                           sidebarLayout(
+                             sidebarPanel(width = 3,
+                                          h4('Peak Detection'),
+                                          selectInput('baseline', 'Remove Baseline?', c(TRUE, FALSE)),
+                                          selectInput('smooth', 'Smooth EIC?', c(FALSE, TRUE)),
+                                          numericInput('snr.th', 'SNR threshold', 5),
+                                          numericInput('scale.th', 'Scale threshold (s)', 5),
+                                          numericInput('int.th', 'Intensity threshold (above the baseline)', 0),
+                                          uiOutput('targetRtCtrl')
+                                          ),
+                             mainPanel(
+                               plotlyOutput('EICPlot'),
+                               tableOutput('PeakInfo'),
+                               tableOutput('PeakArea')
+                             )
+                           )),
+                  
+                  tabPanel('Quantitative Analysis',
+                           sidebarLayout(
+                             sidebarPanel(width = 3,
+                                          selectInput('alignment', 'Alignment EICs across samples?', c(TRUE, FALSE)),
+                                          uiOutput('alignmentCtrl'),
+                                          uiOutput('isoPlotCtrl'),
+                                          actionButton('addButton', 'Add to List')
+                                          ),
+                             mainPanel(
+                               plotlyOutput('SamplesPlot'),
+                               tableOutput('SamplesArea'),
+                               plotlyOutput('SamplesBarPlot')
+                             )
+                           )),
+                             
+                  tabPanel('Result List',
+                           h3('Result List'),
+                           tableOutput('resultList'),
+                           downloadButton("resultDown", "Download")
+                           )
     )
-  ),
-  
-  tabPanel(
-    'Quantitative Result',
-    titlePanel("Quantitative Result"),
-    tableOutput('res_files_peaks'),
-    downloadButton("res_download", "Download")
-  )
-)
+    
+  ))
+))

@@ -7,23 +7,17 @@ data("adducts", package = "enviPat")
 shinyUI(fluidPage(
   titlePanel(img(src="logo.png", width="20%"), "TarMet"),
   sidebarLayout(
-    sidebarPanel(width = 3,
+    sidebarPanel(width = 2,
                  fileInput('files', 'Choose multiple raw data files', multiple=TRUE),
-                 numericInput('resolution', 'Input the resolution of your MS instrument', 50000),
+                 numericInput('resolution', 'Resolution of your MS instrument:', 50000),
                  uiOutput('sampleCtrl'),
-                 selectInput('input', 'Select how to input the target compounds', c('config file', 'direct')),
-                 selectInput('type', 'Select the type of the assay', c('targeted analysis', 'isotopic tracer')),
-                 selectInput('define', 'Select how to define the target compound', c('formula','mass-to-charge')),
-                 selectInput('adduct', 'Select the adduct type', choices = list(
+                 selectInput('input', 'How to input the target compounds?', c('config file', 'direct')),
+                 selectInput('type', 'Type of the assay:', c('targeted analysis', 'isotopic tracer')),
+                 selectInput('define', 'How to define the target compound?', c('formula','mass-to-charge')),
+                 selectInput('adduct', 'Adduct type:', choices = list(
                    Positive = adducts$Name[adducts$Ion_mode == 'positive'],
                    Negative = adducts$Name[adducts$Ion_mode == 'negative']
-                 )),
-                 uiOutput('targetCtrl1'),
-                 uiOutput('targetCtrl2'),
-                 uiOutput('formulaCtrl'),
-                 uiOutput('tracerCtrl1'),
-                 uiOutput('tracerCtrl2'),
-                 actionButton('confirm', 'Confirm')
+                 ))
                  ),
                  
     mainPanel(
@@ -31,6 +25,13 @@ shinyUI(fluidPage(
                   tabPanel('Isotopologues Analysis',
                            sidebarLayout(
                              sidebarPanel(width = 3,
+                                          h4('Definition'),
+                                          uiOutput('targetCtrl1'),
+                                          uiOutput('targetCtrl2'),
+                                          uiOutput('formulaCtrl'),
+                                          uiOutput('tracerCtrl1'),
+                                          uiOutput('tracerCtrl2'),
+                                          actionButton('confirm', 'Confirm'),
                                           h4('Peak Detection'),
                                           selectInput('baseline', 'Remove Baseline?', c(TRUE, FALSE)),
                                           selectInput('smooth', 'Smooth EIC?', c(FALSE, TRUE)),

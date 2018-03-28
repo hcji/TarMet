@@ -17,7 +17,7 @@ function(input, output){
   output$sampleCtrl <- renderUI({
     req(input$files)
     tagList(
-      selectInput('sample', 'Select a sampe as reference', choices = sampleNames())
+      selectInput('sample', 'Reference Sample', choices = sampleNames())
     )
   })
   
@@ -33,11 +33,11 @@ function(input, output){
     } else {
       if (input$define=='mass-to-charge'){
         tagList(
-          numericInput('mz1', 'Input the targeted mass-to-charge', 0)
+          numericInput('mz1', 'Targeted mass-to-charge:', 0)
         ) 
       } else {
         tagList(
-          textInput('formula1', 'Input the targeted compound')
+          textInput('formula1', 'Targeted compound:')
         ) 
       }
     }
@@ -48,11 +48,11 @@ function(input, output){
     choice <- getTargets(input$config$datapath, input$define)
     if (input$define=='mass-to-charge'){
       tagList(
-        selectInput('mz2', 'Select the targeted mass-to-charge', choice=choice)
+        selectInput('mz2', 'Targeted mass-to-charge:', choice=choice)
       ) 
     } else {
       tagList(
-        selectInput('formula2', 'Select the targeted compound', choice=choice)
+        selectInput('formula2', 'Targeted compound:', choice=choice)
       ) 
     }
   })
@@ -87,11 +87,11 @@ function(input, output){
   output$tracerCtrl1 <- renderUI({
     if (input$type=='isotopic tracer'){
       tagList(
-        selectInput('tracer_element', 'Select the element of isotopic tracer', getElements(formula()))
+        selectInput('tracer_element', 'Element of isotopic tracer:', getElements(formula()))
       )
     } else {
       tagList(
-        numericInput('threshold', 'Input the threshold of abundance of isotopic peaks', 0.01)
+        numericInput('threshold', 'Threshold of abundance of isotopic peaks', 0.01)
       )
     }
   })
@@ -99,7 +99,7 @@ function(input, output){
   output$tracerCtrl2 <- renderUI({
     req(input$tracer_element)
     tagList(
-      selectInput('tracer_isotope', 'Select the isotope of tracer', isotopes$isotope[isotopes$element == input$tracer_element][-1]),
+      selectInput('tracer_isotope', 'Isotope of tracer', isotopes$isotope[isotopes$element == input$tracer_element][-1]),
       numericInput('tracer_number', 'Input n, where at most M+n isotopologues are detected.', min(3, getElementNum(formula(), input$tracer_element)), 
                    min = 1, max = getElementNum(formula(), input$tracer_element))
     )

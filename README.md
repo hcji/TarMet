@@ -1,6 +1,22 @@
 # TarMet
 TarMet is a shiny application for targeted metabolic analyses based on mass spectrometry.
 
+## Release note
+v1.1.0 version is pre-released as the development version.
+
+### What's new
+1. New interface.
+2. Allow definite targeted compounds via a config file.
+3. Plot stack-bar figure automatically.
+4. Fix a bug, which makes return error when no peaks detected.
+
+### Known bug
+1. The help documents are not update.
+
+### In the future
+1. Allow run in command line.
+2. Allow multi isotope tracer, like 13C and 15N.
+
 ## Installation  
 
 ### Released version

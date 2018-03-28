@@ -74,7 +74,8 @@ function(input, output){
     }
   })
   
-  formula <- eventReactive(input$confirm, {
+  formula <- reactive({
+    req(input$files)
     if (input$input=='config file' && input$define!='mass-to-charge') {
       as.character(input$formula2)
     } else if (input$input=='direct' && input$define!='mass-to-charge'){
@@ -85,6 +86,7 @@ function(input, output){
   })
   
   output$tracerCtrl1 <- renderUI({
+    req(formula())
     if (input$type=='isotopic tracer'){
       tagList(
         selectInput('tracer_element', 'Element of isotopic tracer:', getElements(formula()))
@@ -132,7 +134,7 @@ function(input, output){
     res
   })
   
-  targetEICs <- reactive({
+  targetEICs <- eventReactive(input$confirm, {
     res <- list()
     withProgress(message = 'Generating EICs', value = 0.1, {
       for (i in seq_along(sampleNames())){
@@ -145,6 +147,7 @@ function(input, output){
   })
   
   targetPeaks <- reactive({
+    req(targetEICs())
     if (input$type!='isotopic tracer'){
       theoretical <- as.numeric(pattern()[,2])
     } else {
@@ -158,7 +161,11 @@ function(input, output){
   })
   
   whichPeak <- reactive({
-    which.max(targetPeaks()$PeakInfo$Similarity)
+    if (input$type!='isotopic tracer'){
+      which.max(targetPeaks()$PeakInfo$Similarity)
+    } else {
+      which.max(colSums(targetPeaks()$PeakArea))
+    }
   })
   
   output$targetRtCtrl <- renderUI({
@@ -187,11 +194,14 @@ function(input, output){
   })
   
   outputPeakInfo <- reactive({
-    rbind(targetPeaks()$PeakInfo, userInfo())
+    rbind(targetPeaks()$PeakInfo[,1:ncol(userInfo())], userInfo())
   })
   
   outputPeakArea <- reactive({
-    res <- cbind(targetPeaks()$PeakArea, userArea())
+    res <- targetPeaks()$PeakArea
+    res <- cbind(rownames(res), res)
+    res <- cbind(res, userArea())
+    colnames(res)[1] <- 'mzRange'
     colnames(res)[ncol(res)] <- 'User'
     res
   })
@@ -219,7 +229,7 @@ function(input, output){
   
   output$isoPlotCtrl <- renderUI({
     tagList(
-      selectInput('WhtoPlot', 'Which isotopic peak to plot', choices = as.character(targetPeaks()$PeakArea[,1]))
+      selectInput('WhtoPlot', 'Which isotopic peak to plot', choices = as.character(rownames(targetPeaks()$PeakArea)))
     )
   })
   

@@ -74,7 +74,7 @@ getMzWithTracer <- function(formula, adduct, element = c('C'), isotope = c('13C'
   if (!is.numeric(d)){d <- which(d == adducts$Name)}
   
   mass <- rcdk::get.formula(formula)@mass
-  mass <- (mass + adducts$Mass[adduct])
+  mass <- (mass + adducts$Mass[d])
   
   addmass <- 0
   if (!is.null(element) && length(element)==length(number) && length(element) == length(isotope)) {
@@ -84,7 +84,7 @@ getMzWithTracer <- function(formula, adduct, element = c('C'), isotope = c('13C'
       addmass <- unlist(lapply(0:number[i] * (m2 - m1), function(s) s+addmass))
     }
   }
-  charge <- abs(adducts$Charge[adduct])
+  charge <- abs(adducts$Charge[d])
   mzs <- (mass+addmass)/charge
   
   return(mzs)

@@ -29,9 +29,11 @@ getIsotopicPeaks <- function(eics, SNR.Th = 4, peakScaleRange = 5, peakThr = 0, 
     Similarity <- sapply(1:ncol(Area), function(s){
       round(getIsotopicSimilarity(Area[,s], theoretical),3)
     })
+  } else {
+    Similarity <- NA
   }
-  PeakArea <- as.data.frame(cbind(names(eics), round(Area,2)))
-  colnames(PeakArea) <- c('MzRange', paste('Peak', 1:length(Position)))
+  PeakArea <- as.data.frame(round(Area,2))
+  colnames(PeakArea) <- c(paste('Peak', 1:length(Position)))
   PeakInfo <- data.frame(Name = paste('Peak', 1:length(Position)), 
                          Position = eic$rt[Position], 
                          Start = eic$rt[Start], 

@@ -77,11 +77,11 @@ function(input, output){
   formula <- reactive({
     req(input$files)
     if (input$input=='config file' && input$define!='mass-to-charge') {
-      as.character(input$formula2)
+      gsub(" ", "", as.character(input$formula2))
     } else if (input$input=='direct' && input$define!='mass-to-charge'){
-      as.character(input$formula1)
+      gsub(" ", "", as.character(input$formula1))
     } else {
-      as.character(input$formula3)
+      gsub(" ", "", as.character(input$formula3))
     }
   })
   
@@ -285,7 +285,7 @@ function(input, output){
   
   output$resultDown <- downloadHandler(
     filename = "results.csv",
-    content = function(file) {
+    content = function(filename) {
       write.csv(quant_res(), filename, row.names = FALSE)
     },
     contentType = "text/csv"

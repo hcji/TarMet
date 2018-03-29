@@ -11,7 +11,7 @@ v1.1.0 version is pre-released as the development version.
 4. Fix a bug, which makes return error when no peaks detected.
 
 ### Known bug
-1. The help documents are not update.
+1. Show error massage when re-input some parameters, but not affect the result.
 
 ### In the future
 1. Allow run in command line.
@@ -21,7 +21,7 @@ v1.1.0 version is pre-released as the development version.
 
 ### Released version
 
-Download the source package at [url](https://github.com/hcji/TarMet/releases) and install the package locally.
+Download the source package at [url](https://github.com/hcji/TarMet/releases/download/v1.1.0/TarMet_1.1.0.tar.gz) and install the package locally.
 
 ### Development version
 
@@ -37,7 +37,7 @@ Download the source package at [url](https://github.com/hcji/TarMet/releases) an
 	library(TarMet)
 	runTarMet()
 	
-  A [user guide](https://github.com/hcji/TarMet/blob/master/vignettes/TarMet.Rmd) is included in the package	
+  A user guide is included in the package, [Here](https://github.com/hcji/TarMet/releases/download/v1.1.0/TarMet.gif) is a gif of how to use the software.
 
 ## Contact
   For any questions, please contact:  ji.hongchao@foxmail.com

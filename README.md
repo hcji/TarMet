@@ -2,11 +2,11 @@
 TarMet is a shiny application for targeted metabolic analyses based on mass spectrometry.
 
 ## Release note
-v1.1.0 version is pre-released as the development version.
+v1.1.1 version is pre-released as the development version.
 
 ### What's new
 1. New interface.
-2. Allow definite targeted compounds via a config file.
+2. Allow load/save targeted compounds information via a config file.
 3. Plot stack-bar figure automatically.
 4. Fix a bug, which makes return error when no peaks detected.
 
@@ -37,7 +37,7 @@ Download the source package at [url](https://github.com/hcji/TarMet/releases/dow
 	library(TarMet)
 	runTarMet()
 	
-  A user guide is included in the package, [Here](https://github.com/hcji/TarMet/releases/download/v1.1.0/TarMet.gif) is a gif of how to use the software.
+  A user guide is included in the package, [Here](https://github.com/hcji/TarMet/releases/download/v1.1.1/TarMet.gif) is a gif of how to use the software.
 
 ## Contact
   For any questions, please contact:  ji.hongchao@foxmail.com

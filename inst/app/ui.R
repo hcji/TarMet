@@ -11,13 +11,8 @@ shinyUI(fluidPage(
                  fileInput('files', 'Choose multiple raw data files', multiple=TRUE),
                  numericInput('resolution', 'Resolution of your MS instrument:', 50000),
                  uiOutput('sampleCtrl'),
-                 selectInput('input', 'How to input the target compounds?', c('config file', 'direct')),
-                 selectInput('type', 'Type of the assay:', c('targeted analysis', 'isotopic tracer')),
-                 selectInput('define', 'How to define the target compound?', c('formula','mass-to-charge')),
-                 selectInput('adduct', 'Adduct type:', choices = list(
-                   Positive = adducts$Name[adducts$Ion_mode == 'positive'],
-                   Negative = adducts$Name[adducts$Ion_mode == 'negative']
-                 ))
+                 selectInput('input', 'How to input the target compounds?', c('config file', 'new compound')),
+                 selectInput('type', 'Type of the assay:', c('targeted analysis', 'isotopic tracer'))
                  ),
                  
     mainPanel(
@@ -28,17 +23,13 @@ shinyUI(fluidPage(
                                           h4('Definition'),
                                           uiOutput('targetCtrl1'),
                                           uiOutput('targetCtrl2'),
-                                          uiOutput('formulaCtrl'),
                                           uiOutput('tracerCtrl1'),
                                           uiOutput('tracerCtrl2'),
+                                          uiOutput('paraCtrl'),
                                           actionButton('confirm', 'Confirm'),
-                                          h4('Peak Detection'),
-                                          selectInput('baseline', 'Remove Baseline?', c(TRUE, FALSE)),
-                                          selectInput('smooth', 'Smooth EIC?', c(FALSE, TRUE)),
-                                          numericInput('snr.th', 'SNR threshold', 5),
-                                          numericInput('scale.th', 'Scale threshold (s)', 5),
-                                          numericInput('int.th', 'Intensity threshold (above the baseline)', 0),
+                                          actionButton('addConfig', 'Add to Config'),
                                           uiOutput('targetRtCtrl')
+                                          
                                           ),
                              mainPanel(
                                plotlyOutput('EICPlot'),
@@ -65,7 +56,10 @@ shinyUI(fluidPage(
                   tabPanel('Result List',
                            h3('Result List'),
                            tableOutput('resultList'),
-                           downloadButton("resultDown", "Download")
+                           downloadButton("resultDown", "Download"),
+                           h3('Config List'),
+                           tableOutput('configList'),
+                           downloadButton("configDown", "Download")
                            )
     )
     

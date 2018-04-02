@@ -90,17 +90,17 @@ getMzWithTracer <- function(formula, adduct, element = c('C'), isotope = c('13C'
   return(mzs)
 }
 
-getMzRanges <- function(mzs, resolution){
+getMzRanges <- function(mzs, resolution, ppm){
   mzranges <- do.call(rbind, lapply(mzs, function(mz){
-    delta <- mz/resolution
+    delta <- max(mz/resolution, 0.5*ppm*mz/10^6)
     data.frame(mzmin=mz-delta, mzmax=mz+delta)
   }))
   return(mzranges)
 }
 
-getMzEICs <- function(raw, mzranges, baseline=TRUE, smooth=FALSE){
+getMzEICs <- function(raw, mzranges, rtranges, baseline=TRUE, smooth=FALSE){
   out <- lapply(1:nrow(mzranges), function(s){
-    eic <- getEIC(raw, mzrange=as.numeric(mzranges[s,]))
+    eic <- getEIC(raw, rtrange=rtranges, mzrange=as.numeric(mzranges[s,]))
     if (smooth) {
       eic$intensity <- smooth.spline(eic$intensity)$y
     }

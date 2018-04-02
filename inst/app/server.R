@@ -8,7 +8,21 @@ function(input, output){
   # set space
   options(shiny.maxRequestSize=1024^4)
   
-  # input UI
+  # load dataset
+  rawDataset <- reactive({
+    req(input$files)
+    res <- list()
+    withProgress(message = 'Reading Data', value = 0.1, {
+      for (i in seq_along(sampleNames())){
+        res[[i]] <- LoadData(input$files$datapath[i])
+      }
+      incProgress(1/length(input$files$datapath))
+    })
+    names(res) <- sampleNames()
+    res
+  })
+  
+  # define samples
   sampleNames <- reactive({
     req(input$files)
     getSampleName(input$files$name)
@@ -25,63 +39,93 @@ function(input, output){
     which(input$sample==sampleNames())
   })
   
+  # define targets
   output$targetCtrl1 <- renderUI({
     if (input$input=='config file') {
       tagList(
-        fileInput('config', 'Choose the config file')
+        fileInput('config', 'Choose the csv config file', accept = ".csv")
       )
     } else {
-      if (input$define=='mass-to-charge'){
-        tagList(
-          numericInput('mz1', 'Targeted mass-to-charge:', 0)
-        ) 
-      } else {
-        tagList(
-          textInput('formula1', 'Targeted compound:')
-        ) 
-      }
+      tagList(
+        textInput('compoundName', 'Name of compound'),
+        selectInput('define', 'How to define the new compound', c('formula', 'mass-to-charge'))
+      )
+    }
+  })
+  
+  # if define targeted compound via config file
+  config <- reactive({
+    if (input$input=='config file') {
+      req(input$config)
+      read.csv(input$config$datapath)
     }
   })
   
   output$targetCtrl2 <- renderUI({
-    req(input$config)
-    choice <- getTargets(input$config$datapath, input$define)
-    if (input$define=='mass-to-charge'){
+    if (input$input=='config file') {
+      req(config())
+      config.name <- as.character(config()$name)
       tagList(
-        selectInput('mz2', 'Targeted mass-to-charge:', choice=choice)
-      ) 
+        selectInput('target', 'Select a targeted compound', choices = config.name)
+      )
+    }
+  })
+  
+  default <- reactive({
+    config <- config()
+    if (input$input=='config file'){
+      wh <- which(config$name==input$target)
+      formula <- if (!is.na(config$formula[wh])) {config$formula[wh]} else {''}
+      adduct <- if (!is.na(config$adduct[wh])) {config$adduct[wh]} else {'M+H'}
+      ppm <- if (!is.na(config$ppm[wh])) {config$ppm[wh]} else {10}
+      rtmin <- if (!is.na(config$rtmin[wh])) {config$rtmin[wh]} else {0}
+      rtmax <- if (!is.na(config$rtmax[wh])) {config$rtmax[wh]} else {max(rawDataset()[[1]]$times)}
+      scale <- if (!is.na(config$scale[wh])) {config$scale[wh]} else {5}
+      height <- if (!is.na(config$height[wh])) {config$height[wh]} else {0}
+      snr <- if (!is.na(config$snr[wh])) {config$snr[wh]} else {5}
     } else {
-      tagList(
-        selectInput('formula2', 'Targeted compound:', choice=choice)
-      ) 
+      formula <- ''
+      adduct <- 'M+H'
+      ppm <- 10
+      rtmin <- 0
+      rtmax <- max(rawDataset()[[1]]$times)
+      scale <- 5
+      height <- 0
+      snr <- 5
     }
+    list(formula=formula, adduct=adduct, ppm=ppm, rtmin=rtmin, rtmax=rtmax, scale=scale, height=height, snr=snr)
   })
   
-  output$formulaCtrl <- renderUI({
-    if (input$define=='mass-to-charge'){
-      if (input$input=='config file'){
-        mz <- as.numeric(input$mz2)
-      } else {
-        mz <- as.numeric(input$mz1)
-      }
-      choice <- try(getCandidateFormula(mz, window=0.005, adduct=input$adduct))
-      if (class(choice)=='try-error'){
-        choice <- NULL
-      }
-      tagList(
-        selectInput('formula3', 'Select the possible formula', choice=choice)
-      ) 
-    }
+  output$paraCtrl <- renderUI({
+    tagList(
+      textInput('formula', 'Formula of target:', value = default()$formula),
+      selectInput('adduct', 'Adduct type:', choices = list(
+        Positive = adducts$Name[adducts$Ion_mode == 'positive'],
+        Negative = adducts$Name[adducts$Ion_mode == 'negative']
+      ), selected = default()$adduct),
+      h4('EIC extraction'),
+      numericInput('ppm', 'EIC ppm:', default()$ppm),
+      numericInput('rtmin', 'RT Start:', default()$rtmin),
+      numericInput('rtmax', 'RT End:', default()$rtmax),
+      h4('Peak Detection'),
+      selectInput('baseline', 'Remove Baseline?', c(TRUE, FALSE)),
+      selectInput('smooth', 'Smooth EIC?', c(FALSE, TRUE)),
+      numericInput('snr.th', 'SNR threshold', default()$snr),
+      numericInput('scale.th', 'Scale threshold (s)', default()$scale),
+      numericInput('int.th', 'Intensity threshold (above the baseline)', default()$height)
+    )
   })
   
+  # define formula
   formula <- reactive({
-    req(input$files)
-    if (input$input=='config file' && input$define!='mass-to-charge') {
-      gsub(" ", "", as.character(input$formula2))
-    } else if (input$input=='direct' && input$define!='mass-to-charge'){
-      gsub(" ", "", as.character(input$formula1))
+    gsub(" ", "", as.character(input$formula))
+  })
+  
+  compoundName <- reactive({
+    if (input$input=='config file') {
+      input$target
     } else {
-      gsub(" ", "", as.character(input$formula3))
+      input$compoundName
     }
   })
   
@@ -118,27 +162,15 @@ function(input, output){
     } else {
       mzs <- pattern()[,1]
     }
-    getMzRanges(mzs, input$resolution)
-  })
-  
-  # load raw dataset
-  rawDataset <- reactive({
-    res <- list()
-    withProgress(message = 'Reading Data', value = 0.1, {
-      for (i in seq_along(sampleNames())){
-        res[[i]] <- LoadData(input$files$datapath[i])
-      }
-      incProgress(1/length(input$files$datapath))
-    })
-    names(res) <- sampleNames()
-    res
+    getMzRanges(mzs, resolution=input$resolution, ppm=input$ppm)
   })
   
   targetEICs <- eventReactive(input$confirm, {
     res <- list()
+    rtranges <- c(input$rtmin, input$rtmax)
     withProgress(message = 'Generating EICs', value = 0.1, {
       for (i in seq_along(sampleNames())){
-        res[[i]] <- getMzEICs(rawDataset()[[i]], mzranges=targetMzRanges(), baseline=input$baseline, smooth=input$smooth)
+        res[[i]] <- getMzEICs(rawDataset()[[i]], rtranges=rtranges, mzranges=targetMzRanges(), baseline=input$baseline, smooth=input$smooth)
       }
       incProgress(1/length(input$files$datapath))
     })
@@ -200,9 +232,9 @@ function(input, output){
   outputPeakArea <- reactive({
     res <- targetPeaks()$PeakArea
     res <- cbind(rownames(res), res)
-    res <- cbind(res, userArea())
+    res <- cbind(res, userArea(), round(userArea()/sum(userArea()),3))
     colnames(res)[1] <- 'mzRange'
-    colnames(res)[ncol(res)] <- 'User'
+    colnames(res)[(ncol(res)-1) : ncol(res)] <- c('User','Abundance')
     res
   })
   
@@ -235,17 +267,19 @@ function(input, output){
   
   alignedEICs <- reactive({
     if (input$alignment){
-      getAlignedEICs(targetEICs(), sampleInd(), input$shift, input$segment)
+      getAlignedEICs(targetEICs(), sampleInd(), input$shift, input$segment, align=TRUE)
     } else {
-      targetEICs()
+      getAlignedEICs(targetEICs(), sampleInd(), input$shift, input$segment, align=FALSE)
     }
   })
   
   output$SamplesPlot <- renderPlotly({
-    EicstoPlot <- lapply(alignedEICs(), function(eics){
-      eics[[input$WhtoPlot]]
+    withProgress(message = 'Generating Plots', value = 0.5, {
+      EicstoPlot <- lapply(alignedEICs(), function(eics){
+        eics[[input$WhtoPlot]]
+      })
+      plotEICs(EicstoPlot, rtrange=c(input$targetRtLeft, input$targetRtRight))
     })
-    plotEICs(EicstoPlot, rtrange=c(input$targetRtLeft, input$targetRtRight))
   })
   
   outputSamplesArea <- reactive({
@@ -269,12 +303,13 @@ function(input, output){
   observeEvent(input$addButton, {
     withProgress(message = 'Successful', value = 0.3, {
       SamplesArea <- outputSamplesArea()
+      compound <- compoundName()
       formula <- formula()
       targetMzRanges <- targetMzRanges()
       rtleft <- input$targetRtLeft
       rtright <- input$targetRtRight
       
-      quant_res_this <- cbind(formula, targetMzRanges, rtleft, rtright, SamplesArea)
+      quant_res_this <- cbind(compound, formula, targetMzRanges, rtleft, rtright, SamplesArea)
       quant_res(rbind(quant_res(), quant_res_this))
     })
   })
@@ -290,5 +325,33 @@ function(input, output){
     },
     contentType = "text/csv"
   )
-
+  
+  config.new <- reactiveVal(data.frame())
+  observeEvent(input$addConfig, {
+    name <- compoundName()
+    formula <- formula()
+    mz <- pattern()[1,1]
+    adduct <- input$adduct
+    ppm <- input$ppm
+    rtmin <- input$rtmin
+    rtmax <- input$rtmax
+    scale <- input$scale.th
+    height <- input$int.th
+    snr <- input$snr.th
+    
+    this.config <- cbind(name, formula, mz, adduct, ppm, rtmin, rtmax, scale, height, snr)
+    config.new(rbind(config.new(), this.config))
+  })
+  
+  output$configList <- renderTable({
+    config.new()
+  })
+  
+  output$configDown <- downloadHandler(
+    filename = "config.csv",
+    content = function(filename) {
+      write.csv(config.new(), filename, row.names = FALSE)
+    },
+    contentType = "text/csv"
+  )
 }

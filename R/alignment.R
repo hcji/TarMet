@@ -1,4 +1,4 @@
-getAlignedEICs <- function(eics, ind, shift, segment) {
+getAlignedEICs <- function(eics, ind, shift, segment, align=TRUE) {
   if (length(eics)==1 | shift<0 | segment<1){
     return(eics)
   }
@@ -13,7 +13,11 @@ getAlignedEICs <- function(eics, ind, shift, segment) {
     for (j in seq_along(references)){
       spectra <- eics[[i]][[j]]
       spectra <- approx(x=spectra$rt, y=spectra$intensity, xout=rtout, rule = 2)$y
-      aligned <- PAFFT(t(spectra), t(references[[j]]), segSize, Shift)$alignedSpectrum
+      if (align) {
+        aligned <- PAFFT(t(spectra), t(references[[j]]), segSize, Shift)$alignedSpectrum
+      } else {
+        aligned <- spectra
+      }
       eics[[i]][[j]]$rt <- rtout
       eics[[i]][[j]]$intensity <- as.numeric(aligned)
     }

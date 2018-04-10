@@ -47,8 +47,7 @@ function(input, output){
       )
     } else {
       tagList(
-        textInput('compoundName', 'Name of compound'),
-        selectInput('define', 'How to define the new compound', c('formula', 'mass-to-charge'))
+        textInput('compoundName', 'Name of compound')
       )
     }
   })

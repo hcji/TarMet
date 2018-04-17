@@ -12,7 +12,7 @@ shinyUI(fluidPage(
                  numericInput('resolution', 'Resolution of your MS instrument:', 50000),
                  uiOutput('sampleCtrl'),
                  selectInput('input', 'How to input the target compounds?', c('config file', 'new compound')),
-                 selectInput('type', 'Type of the assay:', c('targeted analysis', 'isotopic tracer'))
+                 selectInput('type', 'Type of the assay:', c('targeted analysis', 'isotopic tracer', 'data independent analysis'))
                  ),
                  
     mainPanel(
@@ -23,6 +23,7 @@ shinyUI(fluidPage(
                                           h4('Definition'),
                                           uiOutput('targetCtrl1'),
                                           uiOutput('targetCtrl2'),
+                                          uiOutput('diaCtrl'),
                                           uiOutput('tracerCtrl1'),
                                           uiOutput('tracerCtrl2'),
                                           uiOutput('paraCtrl'),

@@ -35,6 +35,12 @@ exportPattern("runTarMet",
               "PAFFT",
               "getQuantifiedResult",
               
+              # DIA 
+              "loadSWATH",
+              
+              # SEARCH
+              "getExperMS",
+              
               # PLOT
               "plotEICs",
               "plotStackBar")

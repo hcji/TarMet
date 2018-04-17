@@ -8,6 +8,12 @@ function(input, output){
   # set space
   options(shiny.maxRequestSize=1024^4)
   
+  # define samples
+  sampleNames <- reactive({
+    req(input$files)
+    getSampleName(input$files$name)
+  })
+  
   # load dataset
   rawDataset <- reactive({
     req(input$files)
@@ -22,10 +28,19 @@ function(input, output){
     res
   })
   
-  # define samples
-  sampleNames <- reactive({
+  rawDIADataset <- reactive({
     req(input$files)
-    getSampleName(input$files$name)
+    if (input$type == 'data independent analysis') {
+      res <- list()
+      withProgress(message = 'Reading SWATH-MS Data', value = 0.1, {
+        for (i in seq_along(sampleNames())){
+          res[[i]] <- loadSWATH(input$files$datapath[i])
+        }
+        incProgress(1/length(input$files$datapath))
+      })
+      names(res) <- sampleNames()
+      res
+    }
   })
   
   output$sampleCtrl <- renderUI({
@@ -74,6 +89,7 @@ function(input, output){
     config <- config()
     if (input$input=='config file'){
       wh <- which(config$name==input$target)
+      id <- if (!is.na(config$formula[wh])) {config$id[wh]} else {''}
       formula <- if (!is.na(config$formula[wh])) {config$formula[wh]} else {''}
       adduct <- if (!is.na(config$adduct[wh])) {config$adduct[wh]} else {'M+H'}
       ppm <- if (!is.na(config$ppm[wh])) {config$ppm[wh]} else {10}
@@ -83,6 +99,7 @@ function(input, output){
       height <- if (!is.na(config$height[wh])) {config$height[wh]} else {0}
       snr <- if (!is.na(config$snr[wh])) {config$snr[wh]} else {5}
     } else {
+      id <- ''
       formula <- ''
       adduct <- 'M+H'
       ppm <- 10
@@ -92,7 +109,17 @@ function(input, output){
       height <- 0
       snr <- 5
     }
-    list(formula=formula, adduct=adduct, ppm=ppm, rtmin=rtmin, rtmax=rtmax, scale=scale, height=height, snr=snr)
+    list(id=id, formula=formula, adduct=adduct, ppm=ppm, rtmin=rtmin, rtmax=rtmax, scale=scale, height=height, snr=snr)
+  })
+  
+  output$diaCtrl <- renderUI({
+    if (input$type == 'data independent analysis') {
+      tagList(
+        selectInput('typeDB', 'Type of MS2 DB', choices = c('in-silicon', 'experimental')),
+        fileInput('msDB', 'Experimental MS2 database (Optional)'),
+        textInput('tarID', 'PubChem ID of target:', value = default()$id)
+      )
+    }
   })
   
   output$paraCtrl <- renderUI({
@@ -113,6 +140,14 @@ function(input, output){
       numericInput('scale.th', 'Scale threshold (s)', default()$scale),
       numericInput('int.th', 'Intensity threshold (above the baseline)', default()$height)
     )
+  })
+  
+  # load msDB
+  msDB <- reactive({
+    if (input$typeDB == experimental){
+      req(input$msDB)
+      read.csv(input$msDB$datapath)
+    }
   })
   
   # define formula
@@ -142,12 +177,14 @@ function(input, output){
   })
   
   output$tracerCtrl2 <- renderUI({
-    req(input$tracer_element)
-    tagList(
-      selectInput('tracer_isotope', 'Isotope of tracer', isotopes$isotope[isotopes$element == input$tracer_element][-1]),
-      numericInput('tracer_number', 'Input n, where at most M+n isotopologues are detected.', min(3, getElementNum(formula(), input$tracer_element)), 
-                   min = 1, max = getElementNum(formula(), input$tracer_element))
-    )
+    if (input$type=='isotopic tracer'){
+      req(input$tracer_element)
+      tagList(
+        selectInput('tracer_isotope', 'Isotope of tracer', isotopes$isotope[isotopes$element == input$tracer_element][-1]),
+        numericInput('tracer_number', 'Input n, where at most M+n isotopologues are detected.', min(3, getElementNum(formula(), input$tracer_element)), 
+                     min = 1, max = getElementNum(formula(), input$tracer_element))
+      )
+    }
   })
   
   # generate target compound informations

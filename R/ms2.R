@@ -10,27 +10,30 @@ getExperMS <- function(tarID, msDB, adduct='M+H', typeDB='experimental'){
   }
 }
 
-getMatchScore <- function(formula, ms2, tarID, msDB, adduct='M+H', typeDB='experimental') {
+getMatchScore <- function(ms2, tarID, msDB, ppm=10, adduct='M+H', typeDB='experimental') {
   if (typeDB == 'experimental') {
-    experMS <- getExperMS(tarID, msDB, adduct='M+H', typeDB='experimental')
-  } else {
-    typeDB <- 'in-silicon'
+    ms2_std <- getExperMS(tarID, msDB, adduct='M+H', typeDB='experimental')
+    ms2_match <- lapply(1:nrow(ms2_std), function(i){
+      mz.std <- ms2_std[i,1]
+      mz.diff <- abs(ms2[,'mz']-mz.std)/mz.std*10^6
+      if (min(mz.diff)>ppm){
+        mz <- mz.std
+        intensity <- 0
+        corr <- NA
+      } else {
+        wh <- which.min(mz.diff)
+        mz <- ms2[wh,'mz']
+        intentisy <- ms2[wh,'intensity']
+        corr <- ms2[wh,'scores']
+      }
+      cbind(mz, intensity, corr)
+    })
+    ms2_match <- do.call(rbind, ms2_match)
+    matching <- sum(ms2_std[,2]*ms2_match[,2])/(sum(ms2_std[,2]*ms2_std[,2])+sum(ms2_match[,2]*ms2_match[,2]))
+    correlation <- mean(ms2_match[,3], na.rm = TRUE)
+    if (is.nan(correlation)) {correlation <- 0}
+    type <- 'experimental'
+    score <- c(matching=matching, correlation=correlation)
   }
-  
-  if (typeDB=='in-silicon'){
-    settingsObject<-list()
-    settingsObject[["DatabaseSearchRelativeMassDeviation"]] <- 10
-    settingsObject[["FragmentPeakMatchAbsoluteMassDeviation"]] <- 0.001
-    settingsObject[["FragmentPeakMatchRelativeMassDeviation"]] <- 5.0
-    settingsObject[["MetFragDatabaseType"]] <- 'PubChem'
-    settingsObject[["PeakList"]] <- ms2
-    settingsObject[["NeutralPrecursorMolecularFormula"]] <- formula
-    settingsObject[["PrecursorCompoundIDs"]] <- as.character(tarID)
-    
-    scored.candidates<-run.metfrag(settingsObject)
-    score <- scored.candidates$Score[1]
-  } else {
-    
-  }
-  
+  return(list(type=type, score=score))
 }

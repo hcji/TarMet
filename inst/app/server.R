@@ -113,12 +113,22 @@ function(input, output){
   })
   
   output$diaCtrl <- renderUI({
-    if (input$type == 'data independent analysis') {
+    if (input$type=='data independent analysis') {
       tagList(
-        selectInput('typeDB', 'Type of MS2 DB', choices = c('in-silicon', 'experimental')),
-        fileInput('msDB', 'Experimental MS2 database (Optional)'),
-        textInput('tarID', 'PubChem ID of target:', value = default()$id)
+        selectInput('typeDB', 'Type of MS2 DB', choices = c('experimental')),
+        textInput('tarID', 'HMDB ID of target:', value = default()$id)
       )
+    }
+  })
+  
+  output$diaCtrl2 <- renderUI({
+    req(input$typeDB)
+    if (input$type == 'data independent analysis') {
+      if (input$typeDB=='experimental') {
+        tagList(
+          fileInput('msDB', 'Experimental MS2 database')
+        )
+      }
     }
   })
   

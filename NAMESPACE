@@ -37,6 +37,9 @@ exportPattern("runTarMet",
               
               # DIA 
               "loadSWATH",
+              "getEIC.SWATH",
+              "getMS2.SWATH",
+              "getScores.SWATH",
               
               # SEARCH
               "getExperMS",

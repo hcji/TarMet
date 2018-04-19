@@ -24,6 +24,7 @@ shinyUI(fluidPage(
                                           uiOutput('targetCtrl1'),
                                           uiOutput('targetCtrl2'),
                                           uiOutput('diaCtrl'),
+                                          uiOutput('diaCtrl2'),
                                           uiOutput('tracerCtrl1'),
                                           uiOutput('tracerCtrl2'),
                                           uiOutput('paraCtrl'),

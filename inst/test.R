@@ -83,6 +83,11 @@ whichPeak <- {
 input$targetRtLeft <- targetPeaks$PeakInfo$Start[whichPeak]
 input$targetRtRight <- targetPeaks$PeakInfo$End[whichPeak]
 input$msCorr.Th <- 0.8
+input$tarID <- '10917'
+input$msDB$datapath <- 'E:/project/TarMet/inst/data/msdb_demo.csv'
+
+msDB <- read.csv(input$msDB$datapath)
+
 
 diaEICs <- {
   targetMz <- mean(as.numeric(targetMzRanges[1,]))

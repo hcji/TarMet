@@ -122,4 +122,19 @@ scoreEICs <- function(eic1, eic2, scales=1:24, points=500){
   return(scores)
 }
 
-
+getScores.SWATH <- function(formula, MS2, tarID, msDB, ppm=10, adduct='M+H', typeDB='experimental', eval='median'){
+  scores <- lapply(MS2, function(ms2){
+    getMatchScore(formula, ms2, tarID, msDB, ppm, adduct, typeDB)
+  })
+  type <- scores[[1]]$type
+  matching <- sapply(scores, function(s){s$scores['matching']})
+  correlation <- sapply(scores, function(s){s$scores['correlation']})
+  if (eval=='mean'){
+    matching <- mean(matching)
+    correlation <- mean(correlation)
+  } else {
+    matching <- median(matching)
+    correlation <- median(correlation)
+  }
+  return(list(type=type, matching=matching, correlation=correlation))
+}

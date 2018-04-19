@@ -104,8 +104,9 @@ getMS2.SWATH <- function(targetEICs, targetPeaks, diaEICs, msCorr.Th=0.8){
         NULL
       }
     })
-    ms2 <- c(ms2, this.ms2)
+    ms2 <- c(ms2, list(this.ms2))
   }
+  names(ms2) <- names(diaEICs)
   return(ms2)
 }
 
@@ -122,19 +123,27 @@ scoreEICs <- function(eic1, eic2, scales=1:24, points=500){
   return(scores)
 }
 
-getScores.SWATH <- function(formula, MS2, tarID, msDB, ppm=10, adduct='M+H', typeDB='experimental', eval='median'){
+scoresMS2 <- function(MS2, tarID, msDB, ppm=10, adduct='M+H', typeDB='experimental', eval='median'){
   scores <- lapply(MS2, function(ms2){
-    getMatchScore(formula, ms2, tarID, msDB, ppm, adduct, typeDB)
+    getMatchScore(ms2, tarID, msDB, ppm, adduct, typeDB)
   })
   type <- scores[[1]]$type
-  matching <- sapply(scores, function(s){s$scores['matching']})
-  correlation <- sapply(scores, function(s){s$scores['correlation']})
+  matching <- sapply(scores, function(s){s$score['matching']})
+  correlation <- sapply(scores, function(s){s$score['correlation']})
   if (eval=='mean'){
-    matching <- mean(matching)
-    correlation <- mean(correlation)
+    matching <- mean(matching, na.rm=TRUE)
+    correlation <- mean(correlation, na.rm=TRUE)
   } else {
-    matching <- median(matching)
-    correlation <- median(correlation)
+    matching <- median(matching, na.rm=TRUE)
+    correlation <- median(correlation, na.rm=TRUE)
   }
   return(list(type=type, matching=matching, correlation=correlation))
 }
+
+getScores.SWATH <- function(MS2, tarID, msDB, ppm=10, adduct='M+H', typeDB='experimental', eval='median'){
+  scores <- lapply(MS2, function(this.MS2){
+    scoresMS2(this.MS2, tarID, msDB, ppm, adduct, typeDB, eval)
+  })
+  return(scores)
+}
+

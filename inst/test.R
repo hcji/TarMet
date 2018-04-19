@@ -83,11 +83,10 @@ whichPeak <- {
 input$targetRtLeft <- targetPeaks$PeakInfo$Start[whichPeak]
 input$targetRtRight <- targetPeaks$PeakInfo$End[whichPeak]
 input$msCorr.Th <- 0.8
-input$tarID <- '10917'
-input$msDB$datapath <- 'E:/project/TarMet/inst/data/msdb_demo.csv'
+input$tarID <- "HMDB00403"
+input$msDB$datapath <- 'E:/project/TarMet/inst/data/DemoDatabase.csv'
 
 msDB <- read.csv(input$msDB$datapath)
-
 
 diaEICs <- {
   targetMz <- mean(as.numeric(targetMzRanges[1,]))
@@ -95,3 +94,5 @@ diaEICs <- {
 }
 
 MS2 <- getMS2.SWATH(targetEICs, targetPeaks, diaEICs, input$msCorr.Th)
+diaScores <- getScores.SWATH(MS2, input$tarID, msDB, ppm=50, adduct='M+H', typeDB='experimental', eval='median')
+

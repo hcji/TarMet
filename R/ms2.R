@@ -10,7 +10,7 @@ getExperMS <- function(tarID, msDB, adduct='M+H', typeDB='experimental'){
   }
 }
 
-getMatchScore <- function(ms2, tarID, msDB, ppm=10, adduct='M+H', typeDB='experimental') {
+getMatchScore <- function(ms2, tarID, msDB, ppm=50, adduct='M+H', typeDB='experimental') {
   if (typeDB == 'experimental') {
     ms2_std <- getExperMS(tarID, msDB, adduct='M+H', typeDB='experimental')
     ms2_match <- lapply(1:nrow(ms2_std), function(i){
@@ -23,13 +23,14 @@ getMatchScore <- function(ms2, tarID, msDB, ppm=10, adduct='M+H', typeDB='experi
       } else {
         wh <- which.min(mz.diff)
         mz <- ms2[wh,'mz']
-        intentisy <- ms2[wh,'intensity']
+        intensity <- ms2[wh,'intensity']
         corr <- ms2[wh,'scores']
       }
-      cbind(mz, intensity, corr)
+      c(mz=mz, intensity=intensity, corr=corr)
     })
     ms2_match <- do.call(rbind, ms2_match)
-    matching <- sum(ms2_std[,2]*ms2_match[,2])/(sum(ms2_std[,2]*ms2_std[,2])+sum(ms2_match[,2]*ms2_match[,2]))
+    ms2_match[,2] <- ms2_match[,2]/max(ms2_match[,2])
+    matching <- sum(ms2_std[,2]*ms2_match[,2])/(sum(ms2_std[,2]*ms2_std[,2])*sum(ms2_match[,2]*ms2_match[,2]))
     correlation <- mean(ms2_match[,3], na.rm = TRUE)
     if (is.nan(correlation)) {correlation <- 0}
     type <- 'experimental'

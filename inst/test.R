@@ -29,7 +29,7 @@ rawDIADataset <- {
   }
 }
 
-input$formula <- 'C6H13N3O3'
+input$formula <- 'C7H15NO3'
 input$adduct <- 'M+H'
 input$ppm <- 20
 input$rtmin <- 0
@@ -84,7 +84,7 @@ input$targetRtPosition <- targetPeaks$PeakInfo$Position[whichPeak]
 input$targetRtLeft <- targetPeaks$PeakInfo$Start[whichPeak]
 input$targetRtRight <- targetPeaks$PeakInfo$End[whichPeak]
 input$msCorr.Th <- 0.8
-input$tarID <- "HMDB00403"
+input$tarID <- "HMDB00062"
 input$msDB$datapath <- 'E:/project/TarMet/inst/data/DemoDatabase.csv'
 
 userInfo <- {

@@ -295,7 +295,8 @@ function(input, output){
         numericInput('msCorr.Th', 'Correlation threshold between MS1 and MS2', 0.7),
         numericInput('msppm.Th', 'ppm threshold for matching', 20),
         selectInput('msEval', 'Criterion for evaluating', choices = c('median', 'mean')),
-        numericInput('msInd', 'Index of MS2 to view', 1)
+        numericInput('msInd', 'Index of MS2 to view', 1),
+        downloadButton("ms2Down", "Save MS2")
       )
     }
   })
@@ -323,7 +324,7 @@ function(input, output){
   })
   
   output$diaOutputTable <- renderTable({
-    res <- do.call(rbind, diaScores$scores)
+    res <- do.call(rbind, diaScores()$scores)
     res <- cbind(rownames(res), res)
     colnames(res) <- c('peak', 'type', 'matching', 'corrleation')
     res
@@ -334,6 +335,14 @@ function(input, output){
     ms2_std <- diaScores()$stdMS
     plotMS2(ms2, ms2_std)
   })
+  
+  output$ms2Down <- downloadHandler(
+    filename = "results.csv",
+    content = function(filename) {
+      write.csv(diaMS2()[['User']][[input$msInd]], filename, row.names = FALSE)
+    },
+    contentType = "text/csv"
+  )
   
   # Alignment
   output$alignmentCtrl <- renderUI({

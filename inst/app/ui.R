@@ -30,8 +30,8 @@ shinyUI(fluidPage(
                                           uiOutput('paraCtrl'),
                                           actionButton('confirm', 'Confirm'),
                                           actionButton('addConfig', 'Add to Config'),
-                                          uiOutput('targetRtCtrl'),
-                                          uiOutput('matchCtrl')
+                                          uiOutput('matchCtrl'),
+                                          uiOutput('targetRtCtrl')
                                           ),
                              mainPanel(
                                plotlyOutput('EICPlot'),

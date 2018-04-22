@@ -38,8 +38,8 @@ loadSWATH <- function(datapath) {
   return(dataMS2)
 }
 
-getEIC.SWATH <- function(rawDIADataset, targetMz, targetPeaks, resolution, ppm) {
-  peaks <- targetPeaks$PeakInfo
+getEIC.SWATH <- function(rawDIADataset, targetMz, PeakInfo, resolution, ppm) {
+  peaks <- PeakInfo
   diaEICs <- list()
   for (i in 1:nrow(peaks)){
     this.start <- as.numeric(peaks$Start[i])
@@ -70,8 +70,8 @@ getEIC.SWATH <- function(rawDIADataset, targetMz, targetPeaks, resolution, ppm) 
   return(diaEICs)
 }
 
-getMS2.SWATH <- function(targetEICs, targetPeaks, diaEICs, msCorr.Th=0.8){
-  peaks <- targetPeaks$PeakInfo
+getMS2.SWATH <- function(targetEICs, PeakInfo, diaEICs, msCorr.Th=0.8){
+  peaks <- PeakInfo
   ms2 <- list()
   for (i in 1:nrow(peaks)){
     this.start <- as.numeric(peaks$Start[i])
@@ -128,6 +128,7 @@ scoresMS2 <- function(MS2, tarID, msDB, ppm=10, adduct='M+H', typeDB='experiment
     getMatchScore(ms2, tarID, msDB, ppm, adduct, typeDB)
   })
   type <- scores[[1]]$type
+  stdMS <- scores[[1]]$stdMS
   matching <- sapply(scores, function(s){s$score['matching']})
   correlation <- sapply(scores, function(s){s$score['correlation']})
   if (eval=='mean'){
@@ -137,13 +138,16 @@ scoresMS2 <- function(MS2, tarID, msDB, ppm=10, adduct='M+H', typeDB='experiment
     matching <- median(matching, na.rm=TRUE)
     correlation <- median(correlation, na.rm=TRUE)
   }
-  return(list(type=type, matching=matching, correlation=correlation))
+  res <- list(scores=list(type=type, matching=matching, correlation=correlation) ,stdMS=stdMS)
+  return(res)
 }
 
 getScores.SWATH <- function(MS2, tarID, msDB, ppm=10, adduct='M+H', typeDB='experimental', eval='median'){
   scores <- lapply(MS2, function(this.MS2){
     scoresMS2(this.MS2, tarID, msDB, ppm, adduct, typeDB, eval)
   })
-  return(scores)
+  stdMS <- scores[[1]]$stdMS
+  scores <- lapply(scores, function(s) s$scores)
+  return(list(stdMS=stdMS, scores=scores))
 }
 

@@ -30,13 +30,15 @@ shinyUI(fluidPage(
                                           uiOutput('paraCtrl'),
                                           actionButton('confirm', 'Confirm'),
                                           actionButton('addConfig', 'Add to Config'),
-                                          uiOutput('targetRtCtrl')
-                                          
+                                          uiOutput('targetRtCtrl'),
+                                          uiOutput('matchCtrl')
                                           ),
                              mainPanel(
                                plotlyOutput('EICPlot'),
                                tableOutput('PeakInfo'),
-                               tableOutput('PeakArea')
+                               tableOutput('PeakArea'),
+                               tableOutput('diaOutputTable'),
+                               plotlyOutput('diaMS2Plot')
                              )
                            )),
                   

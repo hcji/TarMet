@@ -36,5 +36,5 @@ getMatchScore <- function(ms2, tarID, msDB, ppm=50, adduct='M+H', typeDB='experi
     type <- 'experimental'
     score <- c(matching=matching, correlation=correlation)
   }
-  return(list(type=type, score=score))
+  return(list(type=type, stdMS = ms2_std, score=score))
 }

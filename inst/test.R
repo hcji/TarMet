@@ -80,19 +80,31 @@ whichPeak <- {
   }
 }
 
+input$targetRtPosition <- targetPeaks$PeakInfo$Position[whichPeak]
 input$targetRtLeft <- targetPeaks$PeakInfo$Start[whichPeak]
 input$targetRtRight <- targetPeaks$PeakInfo$End[whichPeak]
 input$msCorr.Th <- 0.8
 input$tarID <- "HMDB00403"
 input$msDB$datapath <- 'E:/project/TarMet/inst/data/DemoDatabase.csv'
 
+userInfo <- {
+  Position <- input$targetRtPosition
+  Start <- input$targetRtLeft
+  End <- input$targetRtRight
+  data.frame(Name='User', Position=Position, Start=Start, End=End)
+}
+
+outputPeakInfo <- {
+  rbind(targetPeaks$PeakInfo[,1:ncol(userInfo)], userInfo)
+}
+
 msDB <- read.csv(input$msDB$datapath)
 
 diaEICs <- {
   targetMz <- mean(as.numeric(targetMzRanges[1,]))
-  getEIC.SWATH(rawDIADataset, targetMz, targetPeaks, input$resolution, input$ppm)
+  getEIC.SWATH(rawDIADataset, targetMz, outputPeakInfo, input$resolution, input$ppm)
 }
 
-MS2 <- getMS2.SWATH(targetEICs, targetPeaks, diaEICs, input$msCorr.Th)
+MS2 <- getMS2.SWATH(targetEICs, outputPeakInfo, diaEICs, input$msCorr.Th)
 diaScores <- getScores.SWATH(MS2, input$tarID, msDB, ppm=50, adduct='M+H', typeDB='experimental', eval='median')
 

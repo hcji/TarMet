@@ -152,14 +152,6 @@ function(input, output){
     )
   })
   
-  # load msDB
-  msDB <- reactive({
-    if (input$typeDB == experimental){
-      req(input$msDB)
-      read.csv(input$msDB$datapath)
-    }
-  })
-  
   # define formula
   formula <- reactive({
     gsub(" ", "", as.character(input$formula))
@@ -249,6 +241,7 @@ function(input, output){
   output$targetRtCtrl <- renderUI({
     tagList(
       h4('Targeted Retention Time'),
+      numericInput('targetRtPosition', 'Targeted retention time (Position)', targetPeaks()$PeakInfo$Position[whichPeak()]),
       numericInput('targetRtLeft', 'Targeted retention time (Left)', targetPeaks()$PeakInfo$Start[whichPeak()]),
       numericInput('targetRtRight', 'Targeted retention time (Reft)', targetPeaks()$PeakInfo$End[whichPeak()]),
       downloadButton("targetDown", "Download")
@@ -260,7 +253,7 @@ function(input, output){
   })
   
   userInfo <- reactive({
-    Position <- NA
+    Position <- input$targetRtPosition
     Start <- input$targetRtLeft
     End <- input$targetRtRight
     if (input$type!='isotopic tracer'){
@@ -294,6 +287,53 @@ function(input, output){
     },
     contentType = "text/csv"
   )
+  
+  # DIA functions
+  output$matchCtrl <- renderUI({
+    if(input$type == 'data independent analysis'){
+      tagList(
+        numericInput('msCorr.Th', 'Correlation threshold between MS1 and MS2', 0.7),
+        numericInput('msppm.Th', 'ppm threshold for matching', 20),
+        selectInput('msEval', 'Criterion for evaluating', choices = c('median', 'mean')),
+        numericInput('msInd', 'Index of MS2 to view', 1)
+      )
+    }
+  })
+  
+  msDB <- reactive({
+    if (input$typeDB == 'experimental'){
+      req(input$msDB)
+      read.csv(input$msDB$datapath)
+    }
+  })
+  
+  diaEICs <- reactive({
+    targetMz <- mean(as.numeric(targetMzRanges()[1,]))
+    getEIC.SWATH(rawDIADataset(), targetMz, outputPeakInfo(), input$resolution, input$ppm)
+  })
+  
+  diaMS2 <- reactive({
+    withProgress(message = 'Generating MS2', value = 0.1, {
+      getMS2.SWATH(targetEICs(), outputPeakInfo(), diaEICs(), input$msCorr.Th)
+    })
+  })
+  
+  diaScores <- reactive({
+    getScores.SWATH(diaMS2(), input$tarID, msDB(), ppm=50, adduct=input$adduct, typeDB=input$typeDB, eval=input$msEval)
+  })
+  
+  output$diaOutputTable <- renderTable({
+    res <- do.call(rbind, diaScores$scores)
+    res <- cbind(rownames(res), res)
+    colnames(res) <- c('peak', 'type', 'matching', 'corrleation')
+    res
+  })
+  
+  output$diaMS2Plot <- renderPlotly({
+    ms2 <- diaMS2()[['User']][[input$msInd]]
+    ms2_std <- diaScores()$stdMS
+    plotMS2(ms2, ms2_std)
+  })
   
   # Alignment
   output$alignmentCtrl <- renderUI({

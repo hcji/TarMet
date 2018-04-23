@@ -40,6 +40,7 @@ exportPattern("runTarMet",
               "getEIC.SWATH",
               "getMS2.SWATH",
               "getScores.SWATH",
+              "getMS2.DDA",
               
               # SEARCH
               "getExperMS",

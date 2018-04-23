@@ -12,7 +12,7 @@ shinyUI(fluidPage(
                  numericInput('resolution', 'Resolution of your MS instrument:', 50000),
                  uiOutput('sampleCtrl'),
                  selectInput('input', 'How to input the target compounds?', c('config file', 'new compound')),
-                 selectInput('type', 'Type of the assay:', c('targeted analysis', 'isotopic tracer', 'data independent analysis'))
+                 selectInput('type', 'Type of the assay:', c('targeted analysis', 'isotopic tracer', 'data dependent analysis', 'data independent analysis'))
                  ),
                  
     mainPanel(
@@ -63,7 +63,8 @@ shinyUI(fluidPage(
                            downloadButton("resultDown", "Download"),
                            h3('Config List'),
                            tableOutput('configList'),
-                           downloadButton("configDown", "Download")
+                           downloadButton("configDown", "Download"),
+                           uiOutput('userDBCtrl')
                            )
     )
     

@@ -1,13 +1,3 @@
-getFiles <- function(dir){
-  filepattern <- c("[Cc][Dd][Ff]", "[Nn][Cc]", "([Mm][Zz])?[Xx][Mm][Ll]",
-                   "[Mm][Zz][Dd][Aa][Tt][Aa]", "[Mm][Zz][Mm][Ll]")
-  filepattern <- paste(paste("\\.", filepattern, "$", sep = ""), collapse = "|")
-  info <- file.info(files)
-  listed <- list.files(files[info$isdir], pattern = filepattern,
-                       recursive = TRUE, full.names = TRUE)
-  return(listed)
-}
-
 getSampleName <- function(files){
   Names <- sapply(files, function(f){
     Name <- strsplit(f,'/')[[1]]

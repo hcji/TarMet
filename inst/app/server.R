@@ -8,12 +8,6 @@ function(input, output){
   # set space
   options(shiny.maxRequestSize=1024^4)
   
-  # define samples
-  sampleNames <- reactive({
-    req(input$files)
-    getSampleName(input$files$name)
-  })
-  
   # load dataset
   rawDataset <- reactive({
     req(input$files)
@@ -28,19 +22,10 @@ function(input, output){
     res
   })
   
-  rawDIADataset <- reactive({
+  # define samples
+  sampleNames <- reactive({
     req(input$files)
-    if (input$type %in% c('data independent analysis','data dependent analysis')) {
-      res <- list()
-      withProgress(message = 'Reading SWATH-MS Data', value = 0.1, {
-        for (i in seq_along(sampleNames())){
-          res[[i]] <- loadSWATH(input$files$datapath[i])
-        }
-        incProgress(1/length(input$files$datapath))
-      })
-      names(res) <- sampleNames()
-      res
-    }
+    getSampleName(input$files$name)
   })
   
   output$sampleCtrl <- renderUI({
@@ -62,7 +47,8 @@ function(input, output){
       )
     } else {
       tagList(
-        textInput('compoundName', 'Name of compound')
+        textInput('compoundName', 'Name of compound'),
+        selectInput('define', 'How to define the new compound', c('formula', 'mass-to-charge'))
       )
     }
   })
@@ -78,7 +64,7 @@ function(input, output){
   output$targetCtrl2 <- renderUI({
     if (input$input=='config file') {
       req(config())
-      config.name <- as.character(config()[,1])
+      config.name <- as.character(config()$name)
       tagList(
         selectInput('target', 'Select a targeted compound', choices = config.name)
       )
@@ -88,8 +74,7 @@ function(input, output){
   default <- reactive({
     config <- config()
     if (input$input=='config file'){
-      wh <- which(as.character(config()[,1])==input$target)
-      id <- if (!is.na(config$id[wh])) {config$id[wh]} else {''}
+      wh <- which(config$name==input$target)
       formula <- if (!is.na(config$formula[wh])) {config$formula[wh]} else {''}
       adduct <- if (!is.na(config$adduct[wh])) {config$adduct[wh]} else {'M+H'}
       ppm <- if (!is.na(config$ppm[wh])) {config$ppm[wh]} else {10}
@@ -99,7 +84,6 @@ function(input, output){
       height <- if (!is.na(config$height[wh])) {config$height[wh]} else {0}
       snr <- if (!is.na(config$snr[wh])) {config$snr[wh]} else {5}
     } else {
-      id <- ''
       formula <- ''
       adduct <- 'M+H'
       ppm <- 10
@@ -109,29 +93,7 @@ function(input, output){
       height <- 0
       snr <- 5
     }
-    list(id=id, formula=formula, adduct=adduct, ppm=ppm, rtmin=rtmin, rtmax=rtmax, scale=scale, height=height, snr=snr)
-  })
-  
-  output$diaCtrl <- renderUI({
-    if (input$type=='data independent analysis') {
-      tagList(
-        selectInput('typeDB', 'Type of MS2 DB', choices = c('experimental')),
-        textInput('tarID', 'HMDB ID of target:', value = default()$id)
-      )
-    } else if (input$type=='data dependent analysis'){
-      textInput('tarID', 'HMDB ID of target:', value = default()$id)
-    }
-  })
-  
-  output$diaCtrl2 <- renderUI({
-    req(input$typeDB)
-    if (input$type == 'data independent analysis') {
-      if (input$typeDB=='experimental') {
-        tagList(
-          fileInput('msDB', 'Experimental MS2 database')
-        )
-      }
-    }
+    list(formula=formula, adduct=adduct, ppm=ppm, rtmin=rtmin, rtmax=rtmax, scale=scale, height=height, snr=snr)
   })
   
   output$paraCtrl <- renderUI({
@@ -181,14 +143,12 @@ function(input, output){
   })
   
   output$tracerCtrl2 <- renderUI({
-    if (input$type=='isotopic tracer'){
-      req(input$tracer_element)
-      tagList(
-        selectInput('tracer_isotope', 'Isotope of tracer', isotopes$isotope[isotopes$element == input$tracer_element][-1]),
-        numericInput('tracer_number', 'Input n, where at most M+n isotopologues are detected.', min(3, getElementNum(formula(), input$tracer_element)), 
-                     min = 1, max = getElementNum(formula(), input$tracer_element))
-      )
-    }
+    req(input$tracer_element)
+    tagList(
+      selectInput('tracer_isotope', 'Isotope of tracer', isotopes$isotope[isotopes$element == input$tracer_element][-1]),
+      numericInput('tracer_number', 'Input n, where at most M+n isotopologues are detected.', min(3, getElementNum(formula(), input$tracer_element)), 
+                   min = 1, max = getElementNum(formula(), input$tracer_element))
+    )
   })
   
   # generate target compound informations
@@ -243,7 +203,6 @@ function(input, output){
   output$targetRtCtrl <- renderUI({
     tagList(
       h4('Targeted Retention Time'),
-      numericInput('targetRtPosition', 'Targeted retention time (Position)', targetPeaks()$PeakInfo$Position[whichPeak()]),
       numericInput('targetRtLeft', 'Targeted retention time (Left)', targetPeaks()$PeakInfo$Start[whichPeak()]),
       numericInput('targetRtRight', 'Targeted retention time (Reft)', targetPeaks()$PeakInfo$End[whichPeak()]),
       downloadButton("targetDown", "Download")
@@ -255,7 +214,7 @@ function(input, output){
   })
   
   userInfo <- reactive({
-    Position <- input$targetRtPosition
+    Position <- NA
     Start <- input$targetRtLeft
     End <- input$targetRtRight
     if (input$type!='isotopic tracer'){
@@ -286,125 +245,6 @@ function(input, output){
     filename = paste(formula(), 'csv', sep='.'),
     content = function(filename) {
       write.csv(outputPeakArea(), filename, row.names = FALSE)
-    },
-    contentType = "text/csv"
-  )
-  
-  # DIA functions
-  output$matchCtrl <- renderUI({
-    if(input$type == 'data independent analysis'){
-      tagList(
-        numericInput('msCorr.Th', 'Correlation threshold between MS1 and MS2', 0.7),
-        numericInput('msppm.Th', 'ppm threshold for matching', 20),
-        selectInput('msEval', 'Criterion for evaluating', choices = c('median', 'mean')),
-        numericInput('msInd', 'Index of MS2 to view', 1, min=1, max=length(sampleNames())),
-        downloadButton('ms2Down', "Save MS2")
-      )
-    } else if (input$type == 'data dependent analysis'){
-      tagList(
-        numericInput('dda.mztol', 'mz tolerance between target and precursor', 0.01),
-        numericInput('dda.rttol', 'rt tolerance between target and precursor', 5),
-        numericInput('dda.abund.Th', 'Abundance threshold of fragments', 0.01),
-        numericInput('msInd', 'Index of MS2 to view', 1, min=1, max=length(sampleNames())),
-        actionButton('ms2Add', 'Add to DB')
-      )
-    }
-  })
-  
-  msDB <- reactive({
-    if (input$typeDB == 'experimental'){
-      req(input$msDB)
-      read.csv(input$msDB$datapath)
-    }
-  })
-  
-  diaEICs <- reactive({
-    targetMz <- mean(as.numeric(targetMzRanges()[1,]))
-    getEIC.SWATH(rawDIADataset(), targetMz, outputPeakInfo(), input$resolution, input$ppm)
-  })
-  
-  diaMS2 <- reactive({
-    req(input$targetRtPosition)
-    withProgress(message = 'Generating MS2', value = 0.1, {
-      if(input$type == 'data independent analysis'){
-        getMS2.SWATH(targetEICs(), outputPeakInfo(), diaEICs(), input$msCorr.Th)
-      } else if (input$type == 'data dependent analysis'){
-        getMS2.DDA(rawDIADataset(), target.mz=pattern()[1,1], target.rt=input$targetRtPosition, 
-                   dda.mztol=input$dda.mztol, dda.rttol=input$dda.rttol, abund.Th=input$dda.abund.Th)
-      }
-    })
-  })
-  
-  diaScores <- reactive({
-    if(input$type == 'data independent analysis'){
-      getScores.SWATH(diaMS2(), input$tarID, msDB(), ppm=input$msppm.Th, adduct=input$adduct, typeDB=input$typeDB, eval=input$msEval)
-    }
-  })
-  
-  output$diaOutputTable <- renderTable({
-    req(diaScores())
-    res <- do.call(rbind, diaScores()$scores)
-    res <- cbind(rownames(res), res)
-    colnames(res) <- c('peak', 'type', 'matching', 'corrleation')
-    res
-  })
-  
-  output$diaMS2Plot <- renderPlotly({
-    req(diaMS2())
-    if(input$type == 'data independent analysis'){
-      ms2 <- diaMS2()[['User']][[input$msInd]]
-      ms2_std <- diaScores()$stdMS
-    } else if(input$type == 'data dependent analysis'){
-      ms2 <- diaMS2()[[input$msInd]]
-      ms2_std <- NULL
-    }
-    plotMS2(ms2, ms2_std)
-  })
-  
-  output$ms2Down <- downloadHandler(
-    filename = "results.csv",
-    content = function(filename) {
-      write.csv(diaMS2()[['User']][[input$msInd]], filename, row.names = FALSE)
-    },
-    contentType = "text/csv"
-  )
-  
-  userDB <- reactiveVal(data.frame())
-  observeEvent(input$ms2Add, {
-    ms2 <- diaMS2()[[input$msInd]]
-    withProgress('Successful', value = 0.3, {
-      id <- input$tarID
-      PrecursorMz <- pattern()[1,1]
-      ProductMz <- ms2[,1]
-      Retention.time <- input$targetRtPosition
-      LibraryIntensity <- ms2[,2]
-      adduct <- input$adduct
-      
-      this <- data.frame(id=id, PrecursorMz=PrecursorMz, ProductMz=ProductMz,
-                         Retention.time=Retention.time, LibraryIntensity=LibraryIntensity,
-                         adduct=adduct)
-      userDB(rbind(userDB(), this))
-    })
-  })
-  
-  output$userDB <- renderTable(
-    userDB()
-  )
-  
-  output$userDBCtrl <- renderUI({
-    if (input$type=='data dependent analysis'){
-      tagList(
-        h3('User Database'),
-        tableOutput('userDB'),
-        downloadButton("userDBDown", "Download")
-      )
-    }
-  })
-  
-  output$userDBDown <- downloadHandler(
-    filename = "user_database.csv",
-    content = function(filename) {
-      write.csv(userDB(), filename, row.names = FALSE)
     },
     contentType = "text/csv"
   )

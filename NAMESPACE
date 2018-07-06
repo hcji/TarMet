@@ -7,7 +7,6 @@ exportPattern("runTarMet",
               "getTargets",
               "getElements",
               "getElementNum",
-              "getFiles",
               
               # DATA PROCESS FUNCTIONS
               "LoadData", 
@@ -35,17 +34,6 @@ exportPattern("runTarMet",
               "PAFFT",
               "getQuantifiedResult",
               
-              # DIA 
-              "loadSWATH",
-              "getEIC.SWATH",
-              "getMS2.SWATH",
-              "getScores.SWATH",
-              "getMS2.DDA",
-              
-              # SEARCH
-              "getExperMS",
-              
               # PLOT
               "plotEICs",
-              "plotStackBar",
-              "plotMS2")
+              "plotStackBar")

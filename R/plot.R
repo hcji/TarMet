@@ -41,27 +41,3 @@ plotStackBar <- function(SampleAreas) {
   
   p
 }
-
-plotMS2 <- function(ms2, ms2_std=NULL) {
-  p <- plot_ly() %>%
-    layout(xaxis = list(range=c(0, max(ms2[,1])+10), tick0 = 0, title = 'mass-to-charge'),
-           yaxis = list(tick0 = 0, title = 'Intensity'),
-           showlegend = FALSE)
-  
-  mz1 <- ms2[,1]
-  intensity1 <- ms2[,2]/max(ms2[,2])*100
-  for (i in seq_along(mz1)){
-    p <- add_lines(p, x=rep(mz1[i],2), y=c(0,intensity1[i]), color=I('blue'))
-  }
-  
-  if (!is.null(ms2_std)){
-    mz2 <- ms2_std$ProductMz
-    intensity2 <- -ms2_std[,2]/max(ms2_std[,2])*100
-    for (i in seq_along(mz2)){
-      p <- add_lines(p, x=rep(mz2[i],2), y=c(0,intensity2[i]), color=I('red'))
-    }
-  }
-  
-  p
-}
-

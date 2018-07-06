@@ -1,31 +1,29 @@
 # TarMet
 TarMet is a shiny application for targeted metabolic analyses based on mass spectrometry.
 
-## Release note
-v1.2.0 version is pre-released as the development version (only). 
+## Note
+The source code roll back to v1.1.1 version, which is identical to the latest release version. The support of DIA dataset is removed. 
+New package for DIA-MS is developping. Pay close attention to [TarSWATH](https://github.com/hcji/TarSWATH).
 
-### What's new
-1. MS/MS deconvolution for data-independent acquisition datasets.
-2. Custom MS/MS database build by data-dependent acquisition datasets.
+### Known bug
+1. Show error massage when re-input some parameters, but not affect the result.
 
 ### In the future
 1. Allow run in command line.
 2. Allow multi isotope tracer, like 13C and 15N.
 
 ## Installation  
-### Install Depends
-First, please install the depends with the following codes
+
+### Released version
+
+Download the source package at [url](https://github.com/hcji/TarMet/releases/download/v1.1.1/TarMet_1.1.1.tar.gz) and install the package locally.
+
+### Development version
 
 	install.packages(c("rcdk", "tidyr", "devtools", "data.table", "enviPat", "Matrix", "shiny", "plotly"))
 	source("https://bioconductor.org/biocLite.R")
     biocLite(c("MassSpecWavelet", "mzR"))
-
-### Released version (Suggested)
-Download the source package at [url](https://github.com/hcji/TarMet/releases/download/v1.1.0/TarMet_1.1.0.tar.gz) and install the package locally.
-
-### Development version
-Note: Development may include bugs/error and functions not ready.
-
+	
 	library(devtools)
 	install_github("hcji/TarMet")
 

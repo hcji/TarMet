@@ -20,9 +20,9 @@ Download the source package at [url](https://github.com/hcji/TarMet/releases/dow
 
 ### Development version
 
-	install.packages(c("rcdk", "tidyr", "devtools", "data.table", "enviPat", "Matrix", "shiny", "plotly"))
-	source("https://bioconductor.org/biocLite.R")
-    biocLite(c("MassSpecWavelet", "mzR"))
+	install.packages(c("BiocManager", "rcdk", "tidyr", "devtools", "data.table", "enviPat", "Matrix", "shiny", "plotly"))
+	BiocManager::install("MassSpecWavelet")
+	BiocManager::install("mzR")
 	
 	library(devtools)
 	install_github("hcji/TarMet")

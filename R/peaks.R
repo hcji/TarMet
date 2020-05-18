@@ -1,10 +1,18 @@
-getIsotopicPeaks <- function(eics, SNR.Th = 4, peakScaleRange = 5, peakThr = 0, theoretical = NULL){
+getIsotopicPeaks <- function(eics, SNR.Th = 4, peakScaleRange = 5, peakThr = 0, theoretical = NULL, fineness='High'){
+  if (fineness=='High'){
+    fineval = 0.05
+  } else if(fineness=='Medium'){
+    fineval = 0.5
+  } else {
+    fineval = 2
+  }
+  
   peakScaleRange <- round(peakScaleRange/ mean(diff(eics[[1]]$rt)))
   eic_mat <- do.call(rbind, lapply(eics, function(e) e$intensity))
   eic <- list(rt=eics[[1]]$rt, intensity=apply(eic_mat, 2, max))
   if (sum(eic$intensity)==0) return(NULL)
   MajorPeaks <- try(
-    peakDetectionCWT(eic$intensity, scales = c(1, seq(2, round(0.05*length(eic$intensity)), 2)), SNR.Th = SNR.Th, peakScaleRange = peakScaleRange, peakThr = peakThr)
+    peakDetectionCWT(eic$intensity, scales = c(1, seq(2, round(0.05*length(eic$intensity)), fineval)), SNR.Th = SNR.Th, peakScaleRange = peakScaleRange, peakThr = peakThr)
   )
   if (class(MajorPeaks)=='try-error'){
     return(NULL)

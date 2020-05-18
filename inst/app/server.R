@@ -77,7 +77,7 @@ function(input, output){
       wh <- which(config$name==input$target)
       formula <- if (!is.na(config$formula[wh])) {config$formula[wh]} else {''}
       adduct <- if (!is.na(config$adduct[wh])) {config$adduct[wh]} else {'M+H'}
-      ppm <- if (!is.na(config$ppm[wh])) {config$ppm[wh]} else {10}
+      ppm <- if (!is.na(config$ppm[wh])) {config$ppm[wh]} else {50}
       rtmin <- if (!is.na(config$rtmin[wh])) {config$rtmin[wh]} else {0}
       rtmax <- if (!is.na(config$rtmax[wh])) {config$rtmax[wh]} else {max(rawDataset()[[1]]$times)}
       scale <- if (!is.na(config$scale[wh])) {config$scale[wh]} else {5}
@@ -108,8 +108,9 @@ function(input, output){
       numericInput('rtmin', 'RT Start:', default()$rtmin),
       numericInput('rtmax', 'RT End:', default()$rtmax),
       h4('Peak Detection'),
-      selectInput('baseline', 'Remove Baseline?', c(TRUE, FALSE)),
+      selectInput('baseline', 'Remove Baseline?', c(FALSE, TRUE)),
       selectInput('smooth', 'Smooth EIC?', c(FALSE, TRUE)),
+      selectInput('fineness', 'Fineness of Detection', c('High', 'Medium', 'Low')),
       numericInput('snr.th', 'SNR threshold', default()$snr),
       numericInput('scale.th', 'Scale threshold (s)', default()$scale),
       numericInput('int.th', 'Intensity threshold (above the baseline)', default()$height)
@@ -185,7 +186,7 @@ function(input, output){
     } else {
       theoretical <- NULL
     }
-    getIsotopicPeaks(targetEICs()[[sampleInd()]], SNR.Th=input$snr.th, peakScaleRange=input$scale.th, peakThr=input$int.th, theoretical=theoretical)
+    getIsotopicPeaks(targetEICs()[[sampleInd()]], SNR.Th=input$snr.th, peakScaleRange=input$scale.th, peakThr=input$int.th, theoretical=theoretical, fineness=input$fineness)
   })
   
   output$EICPlot <- renderPlotly({

@@ -110,7 +110,7 @@ function(input, output){
       h4('Peak Detection'),
       selectInput('baseline', 'Remove Baseline?', c(FALSE, TRUE)),
       selectInput('smooth', 'Smooth EIC?', c(FALSE, TRUE)),
-      selectInput('fineness', 'Fineness of Detection', c('High', 'Medium', 'Low')),
+      selectInput('fineness', 'Fineness of Detection', c('Medium', 'High', 'Low')),
       numericInput('snr.th', 'SNR threshold', default()$snr),
       numericInput('scale.th', 'Scale threshold (s)', default()$scale),
       numericInput('int.th', 'Intensity threshold (above the baseline)', default()$height)

@@ -25,6 +25,7 @@ shinyUI(fluidPage(
                                           uiOutput('targetCtrl2'),
                                           uiOutput('tracerCtrl1'),
                                           uiOutput('tracerCtrl2'),
+                                          uiOutput('paraCtrl0'),
                                           uiOutput('paraCtrl'),
                                           actionButton('confirm', 'Confirm'),
                                           actionButton('addConfig', 'Add to Config'),

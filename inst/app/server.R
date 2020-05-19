@@ -96,13 +96,35 @@ function(input, output){
     list(formula=formula, adduct=adduct, ppm=ppm, rtmin=rtmin, rtmax=rtmax, scale=scale, height=height, snr=snr)
   })
   
+  output$paraCtrl0 <- renderUI({
+    if (input$input != 'config file'){
+      if (input$define == 'formula'){
+        tagList(
+          textInput('formula', 'Formula of target:', value = default()$formula),
+          selectInput('adduct', 'Adduct type:', choices = list(
+            Positive = adducts$Name[adducts$Ion_mode == 'positive'],
+            Negative = adducts$Name[adducts$Ion_mode == 'negative']
+          ), selected = default()$adduct)
+        )
+      }else{
+        tagList(
+          numericInput('mass_to_charge', 'mass-to-charge:', value = 0),
+          numericInput('charge', 'mass-to-charge:', value = 1)
+        )
+      }
+    }else{
+      tagList(
+        textInput('formula', 'Formula of target:', value = default()$formula),
+        selectInput('adduct', 'Adduct type:', choices = list(
+          Positive = adducts$Name[adducts$Ion_mode == 'positive'],
+          Negative = adducts$Name[adducts$Ion_mode == 'negative']
+        ), selected = default()$adduct)
+      )
+    }
+  })
+  
   output$paraCtrl <- renderUI({
     tagList(
-      textInput('formula', 'Formula of target:', value = default()$formula),
-      selectInput('adduct', 'Adduct type:', choices = list(
-        Positive = adducts$Name[adducts$Ion_mode == 'positive'],
-        Negative = adducts$Name[adducts$Ion_mode == 'negative']
-      ), selected = default()$adduct),
       h4('EIC extraction'),
       numericInput('ppm', 'EIC ppm:', default()$ppm),
       numericInput('rtmin', 'RT Start:', default()$rtmin),
@@ -154,14 +176,17 @@ function(input, output){
   
   # generate target compound informations
   pattern <- reactive({
+    req(formula())
     getIsotopicPattern(formula(), input$adduct, input$threshold, input$resolution)
   })
   
   targetMzRanges <- reactive({
     if (input$type=='isotopic tracer'){
       mzs <- getMzWithTracer(formula(), input$adduct, input$tracer_element, input$tracer_isotope, input$tracer_number)
-    } else {
+    } else if(input$define == 'formula'){
       mzs <- pattern()[,1]
+    } else {
+      mzs <- c(input$mass_to_charge) + 1.0034 * c(0, 1, 2, 3) / input$charge
     }
     getMzRanges(mzs, resolution=input$resolution, ppm=input$ppm)
   })
@@ -182,11 +207,17 @@ function(input, output){
   targetPeaks <- reactive({
     req(targetEICs())
     if (input$type!='isotopic tracer'){
-      theoretical <- as.numeric(pattern()[,2])
+      if (input$define == 'formula'){
+        theoretical <- as.numeric(pattern()[,2])
+      } else {
+        theoretical <- NULL
+      }
     } else {
       theoretical <- NULL
     }
-    getIsotopicPeaks(targetEICs()[[sampleInd()]], SNR.Th=input$snr.th, peakScaleRange=input$scale.th, peakThr=input$int.th, theoretical=theoretical, fineness=input$fineness)
+    withProgress(message = 'Peak detection', value = 0.5, {
+      getIsotopicPeaks(targetEICs()[[sampleInd()]], SNR.Th=input$snr.th, peakScaleRange=input$scale.th, peakThr=input$int.th, theoretical=theoretical, fineness=input$fineness)
+    })
   })
   
   output$EICPlot <- renderPlotly({
@@ -195,7 +226,11 @@ function(input, output){
   
   whichPeak <- reactive({
     if (input$type!='isotopic tracer'){
-      which.max(targetPeaks()$PeakInfo$Similarity)
+      if (input$define == 'formula'){
+        which.max(targetPeaks()$PeakInfo$Similarity)
+      } else {
+        which.max(colSums(targetPeaks()$PeakArea))
+      }
     } else {
       which.max(colSums(targetPeaks()$PeakArea))
     }
@@ -219,8 +254,12 @@ function(input, output){
     Start <- input$targetRtLeft
     End <- input$targetRtRight
     if (input$type!='isotopic tracer'){
-      Similarity <- round(getIsotopicSimilarity(userArea(), pattern()[,2]), 3)
-      data.frame(Name='User', Position=Position, Start=Start, End=End, Similarity=Similarity)
+      if (input$define == 'formula'){
+        Similarity <- round(getIsotopicSimilarity(userArea(), pattern()[,2]), 3)
+        data.frame(Name='User', Position=Position, Start=Start, End=End, Similarity=Similarity)
+      } else {
+        data.frame(Name='User', Position=Position, Start=Start, End=End)
+      }
     } else {
       data.frame(Name='User', Position=Position, Start=Start, End=End)
     }

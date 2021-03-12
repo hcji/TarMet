@@ -1,10 +1,6 @@
 # TarMet
 TarMet is a shiny application for targeted metabolic analyses based on mass spectrometry.
 
-## Note
-The source code roll back to v1.1.1 version, which is identical to the latest release version. The support of DIA dataset is removed. 
-New package for DIA-MS is developping. Pay close attention to [TarSWATH](https://github.com/hcji/TarSWATH).
-
 ### Known bug
 1. Show error massage when re-input some parameters, but not affect the result.
 

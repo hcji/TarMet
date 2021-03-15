@@ -1,4 +1,4 @@
-# TarMet
+## TarMet
 TarMet is a shiny application for targeted metabolic analyses based on mass spectrometry.
 
 ### Known bug
@@ -8,7 +8,7 @@ TarMet is a shiny application for targeted metabolic analyses based on mass spec
 1. Allow run in command line.
 2. Allow multi isotope tracer, like 13C and 15N.
 
-## Installation  
+### Installation  
 
 ### Released version
 
@@ -23,12 +23,16 @@ Download the source package at [url](https://github.com/hcji/TarMet/releases/dow
 	library(devtools)
 	install_github("hcji/TarMet")
 
-## Usage:
+### Usage:
 
 	library(TarMet)
 	runTarMet()
 	
   A user guide is included in the package, [Here](https://github.com/hcji/TarMet/releases/download/v1.1.1/TarMet.gif) is a gif of how to use the software.
 
-## Contact
+### Command line:
+
+  Detailed description of using TarMet with R scripts can be found [Here](https://github.com/hcji/TarMet/blob/master/vignettes/TarMetCL.Rmd) and [Here](https://rpubs.com/jihongchao/TarMetCL).
+  
+### Contact
   For any questions, please contact:  ji.hongchao@foxmail.com

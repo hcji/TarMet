@@ -1,0 +1,269 @@
+---
+title: "TarMetCL"
+author: "Hongchao Ji"
+date: "2021/3/12"
+output:
+  BiocStyle::html_document:
+    toc_float: true
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Targeted metabolic analyses based on mass spectrometry}
+  %\VignetteKeywords{mass spectrometry, metabolomics}
+  %\VignetteEncoding{UTF-8}
+  %\VignettePackage{TarMet}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+This is a guide for using TarMet with R scripts.
+
+# Targeted metabolite analysis
+## Preparation
+```{r preparation, message = FALSE, echo = TRUE, warning=FALSE}
+library(TarMet)
+
+data("isotopes", package = "enviPat")
+data("adducts", package = "enviPat")
+
+# path of raw data
+rawfiles <- list.files(system.file('rawfiles', package = 'TarMet'), full.names = TRUE)  # path of data files
+samples <- sapply(strsplit(rawfiles, '/'), function(s) s[length(s)])                    # name of data files
+rawDataset <- lapply(rawfiles, LoadData)                                                # load raw data
+
+# path of config file
+config <- read.csv(system.file('data/targets.csv', package = 'TarMet'))
+
+# global parameters
+fineness <- 'Medium'  # fineness of peak detection of MassSpecWavelet
+resolution <- 50000   # resolution of your MS
+
+shift <- 20           # parameter for alignment
+segment <- 20         # parameter for alignment
+
+# select the referance sample
+sampleInd <- 1        # choose a reference file
+```
+
+## Set targeted metabolite
+```{r targeted metabolite, message = FALSE, echo = TRUE, warning=FALSE}
+i = 1                 # use the first metabolite
+
+# set the parameters for the specific metabolite
+threshold <- 0.01
+name <- config$name[i]
+formula <- config$formula[i]
+mz <- config$mz[i]
+  
+# adduct type
+if (is.na(config$adduct[i])){
+  adduct <- 'M+H'
+} else {
+  adduct <- config$adduct[i]
+}
+  
+  # ppm for EIC generation
+if (is.na(config$ppm[i])){
+  ppm <- 100
+} else {
+  ppm <- config$ppm[i]
+}
+  
+  # scales for peak detection
+if (is.na(config$scale[i])){
+  scale <- 5
+} else {
+  scale <- config$scale[i]
+}
+  
+  # start of retention time for EIC generation 
+if (is.na(config$rtmin[i])){
+  rtmin <- 0
+} else {
+  rtmin <- config$rtmin[i]
+}
+
+# end of retention time for EIC generation 
+if (is.na(config$rtmax[i])){
+  rtmax <- max(rawDataset[[1]]$times)
+} else {
+  rtmax <- config$rtmax[i]
+} 
+  
+# minimum peak height of a peak
+if (is.na(config$height[i])){
+  height <- 0
+} else {
+  height <- config$height[i]
+}
+  
+# minimum SNR of a peak
+if (is.na(config$snr[i])){
+  snr <- 5
+} else {
+  snr <- config$snr[i]
+}
+```
+
+## Calculate targeted m/z value
+```{r mz calculation, message = FALSE, echo = TRUE, warning=FALSE}
+pattern <- getIsotopicPattern(formula, adduct, threshold, resolution)
+mzs <- pattern[,1]
+targetMzRanges <- getMzRanges(mzs, resolution=resolution, ppm=ppm)
+```
+
+## Targeted EIC generation
+```{r eic generation, message = FALSE, echo = TRUE, warning=FALSE}
+targetEICs <- list()
+rtranges <- c(rtmin, rtmax)
+for (j in seq_along(rawfiles)){
+  targetEICs[[j]] <- getMzEICs(rawDataset[[j]], rtranges=rtranges, mzranges=targetMzRanges, baseline=FALSE, smooth=FALSE)
+}
+  
+theoretical <- as.numeric(pattern[,2])
+targetPeaks <- getIsotopicPeaks(targetEICs[[sampleInd]], SNR.Th=snr, peakScaleRange=scale, peakThr=height, theoretical=theoretical, fineness=fineness)
+plotEICs(targetEICs[[sampleInd]], targetPeaks)
+```
+
+## Display peak detection results
+```{r peak info, message = FALSE, echo = TRUE, warning=FALSE}
+outputPeakInfo <- targetPeaks$PeakInfo
+knitr::kable(outputPeakInfo, format = "markdown")
+```
+
+## Alignment
+```{r alignment, message = FALSE, echo = TRUE, warning=FALSE}
+alignedEICs <- getAlignedEICs(targetEICs, sampleInd, shift, segment, align=TRUE)
+WhtoPlot <- 1  # plot the monoisotopic feature of the targeted metabolite of all samples
+EicstoPlot <- lapply(alignedEICs, function(eics){
+  eics[[WhtoPlot]]
+})
+names(EicstoPlot) <- samples
+plotEICs(EicstoPlot, rtrange=c(outputPeakInfo$Start[WhtoPlot], outputPeakInfo$End[WhtoPlot]))
+```
+
+## Display peak area of all samples
+```{r alignment results, message = FALSE, echo = TRUE, warning=FALSE}
+whPeak <- which.max(outputPeakInfo$Similarity)  # Using the feature with most similar isotopic pattern
+outputSamplesArea <- getQuantifiedResult(alignedEICs, outputPeakInfo$Start[whPeak], outputPeakInfo$End[whPeak])
+colnames(outputSamplesArea) <- samples
+knitr::kable(outputSamplesArea, format = "markdown")
+```
+
+## Display barplot of isotopes
+```{r isotope barplot, message = FALSE, echo = TRUE, warning=FALSE}
+plotStackBar(outputSamplesArea)
+```
+
+# Isotope tracer analysis
+## Preparation
+```{r isotope tracer data, message = FALSE, echo = TRUE, warning=FALSE}
+
+if (!'AssayRdata' %in% installed.packages()){
+  install.packages(
+    "https://gitlab.com/jimiwills/assay.R/raw/master/AssayR_0.1.5.tar.gz", 
+    repos = NULL, type = "source")
+  install.packages(
+    "https://gitlab.com/jimiwills/assay.R/raw/2190202fd4bc0325421bb10c4ec42089d45e1952/AssayRdata_0.1.3.tar.gz", 
+    repos = NULL, type = "source")
+}
+
+rawfiles <- list.files(system.file("extdata", package = "AssayRdata"), full.names = TRUE)
+samples <- sapply(strsplit(rawfiles, '/'), function(s) s[length(s)])
+rawDataset <- lapply(rawfiles, LoadData)
+```
+
+## Set targeted metabolite
+```{r tracer target, message = FALSE, echo = TRUE, warning=FALSE}
+name <- 'glucose'
+formula <- 'C6H12O6'
+adduct <- 'M-H'
+
+ppm <- 50
+scale <- 5
+rtmin <- 0
+rtmax <- max(rawDataset[[1]]$times)
+height <- 0
+snr <- 10
+```
+
+## Calculate m/z value
+```{r tracer m/z, message = FALSE, echo = TRUE, warning=FALSE}
+tracer_element <- 'C'       # type of element
+tracer_isotope <- '13C'     # type of isotope tracer
+tracer_number <- 6          # maximum number of isotope tagger
+mzs <- getMzWithTracer(formula, adduct, tracer_element, tracer_isotope, tracer_number)
+targetMzRanges <- getMzRanges(mzs, resolution=resolution, ppm=ppm)
+```
+
+## Targeted EIC generation
+```{r tracer eic generation, message = FALSE, echo = TRUE, warning=FALSE}
+targetEICs <- list()
+rtranges <- c(rtmin, rtmax)
+for (j in seq_along(rawfiles)){
+  targetEICs[[j]] <- getMzEICs(rawDataset[[j]], rtranges=rtranges, mzranges=targetMzRanges, baseline=FALSE, smooth=FALSE)
+}
+  
+theoretical <- as.numeric(pattern[,2])
+targetPeaks <- getIsotopicPeaks(targetEICs[[sampleInd]], SNR.Th=snr, peakScaleRange=scale, peakThr=height, theoretical=theoretical, fineness=fineness)
+plotEICs(targetEICs[[sampleInd]], targetPeaks)
+```
+
+## Display peak information
+```{r tracer peakinfo, message = FALSE, echo = TRUE, warning=FALSE}
+outputPeakInfo <- targetPeaks$PeakInfo
+knitr::kable(outputPeakInfo, format = "markdown")
+```
+
+## Set peak bounds manually
+Set peak bounds manually to combine peak 1 and peak 2
+```{r user info, message = FALSE, echo = TRUE, warning=FALSE}
+targetRtLeft <- 900.492
+targetRtRight <- 976.229
+targetRtAxis <- 928.768
+userInfo <- data.frame(Name='User', Position=targetRtAxis, Start=targetRtLeft, End=targetRtRight)
+outputPeakInfo <- rbind(targetPeaks$PeakInfo[,1:ncol(userInfo)], userInfo)
+knitr::kable(outputPeakInfo, format = "markdown")
+```
+
+## Calculate peak area
+```{r peakinfo, message = FALSE, echo = TRUE, warning=FALSE}
+userArea <- round(getArea(targetEICs[[sampleInd]], targetRtLeft, targetRtRight), 2)
+outputPeakArea <- {
+    res <- targetPeaks$PeakArea
+    res <- cbind(rownames(res), res)
+    res <- cbind(res, userArea, round(userArea/sum(userArea),3))
+    colnames(res)[1] <- 'mzRange'
+    colnames(res)[(ncol(res)-1) : ncol(res)] <- c('User','Abundance')
+    res
+}
+
+knitr::kable(outputPeakArea, format = "markdown")
+```
+
+## Alignment
+```{r tracer alignment, message = FALSE, echo = TRUE, warning=FALSE}
+alignedEICs <- getAlignedEICs(targetEICs, sampleInd, shift, segment, align=TRUE)
+WhtoPlot <- 7   # plot the M+6 feature of the targeted metabolite of all samples
+EicstoPlot <- lapply(alignedEICs, function(eics){
+  eics[[WhtoPlot]]
+})
+names(EicstoPlot) <- samples
+plotEICs(EicstoPlot, rtrange=c(outputPeakInfo$Start[WhtoPlot], outputPeakInfo$End[WhtoPlot]))
+```
+
+## Display peak area of all samples
+```{r tracer alignment results, message = FALSE, echo = TRUE, warning=FALSE}
+whPeak <- which(outputPeakInfo$Name == 'User')
+outputSamplesArea <- getQuantifiedResult(alignedEICs, outputPeakInfo$Start[whPeak], outputPeakInfo$End[whPeak])
+colnames(outputSamplesArea) <- samples
+knitr::kable(outputSamplesArea, format = "markdown")
+```
+
+## Display barplot of isotopes
+```{r tracer isotope barplot, message = FALSE, echo = TRUE, warning=FALSE}
+plotStackBar(outputSamplesArea)
+```
+

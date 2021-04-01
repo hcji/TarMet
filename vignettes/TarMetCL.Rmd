@@ -182,7 +182,7 @@ formula <- 'C6H12O6'
 adduct <- 'M-H'
 
 ppm <- 50
-scale <- 5
+scale <- 10
 rtmin <- 0
 rtmax <- max(rawDataset[[1]]$times)
 height <- 0

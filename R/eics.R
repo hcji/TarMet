@@ -38,6 +38,13 @@ getEIC <- function(raw, rtrange=c(0,Inf), mzrange){
       return(0)
     }
   }))
+  
+  if (min(diff(rt)) > 0.5){
+    rt1 <- seq(rt[1], rt[length(rt)], 0.5)
+    intensity <- approx(rt, intensity, rt1)$y
+    rt <- rt1
+  }
+  
   return(list(rt = rt, intensity = intensity))
 }
 

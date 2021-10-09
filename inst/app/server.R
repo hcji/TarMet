@@ -177,7 +177,7 @@ function(input, output){
   # generate target compound informations
   pattern <- reactive({
     req(formula())
-    getIsotopicPattern(formula(), input$adduct, input$threshold, input$resolution)
+    isolate(getIsotopicPattern(formula(), input$adduct, input$threshold, input$resolution))
   })
   
   targetMzRanges <- reactive({
@@ -188,25 +188,25 @@ function(input, output){
     } else {
       mzs <- c(input$mass_to_charge) + 1.0034 * c(0, 1, 2, 3) / input$charge
     }
-    getMzRanges(mzs, resolution=input$resolution, ppm=input$ppm)
+    isolate(getMzRanges(mzs, resolution=input$resolution, ppm=input$ppm))
   })
   
   targetEICs <- eventReactive(input$confirm, {
     res <- list()
     rtranges <- c(input$rtmin, input$rtmax)
-    withProgress(message = 'Generating EICs', value = 0.1, {
+    isolate(withProgress(message = 'Generating EICs', value = 0.1, {
       for (i in seq_along(sampleNames())){
         res[[i]] <- getMzEICs(rawDataset()[[i]], rtranges=rtranges, mzranges=targetMzRanges(), baseline=input$baseline, smooth=input$smooth)
       }
       incProgress(1/length(input$files$datapath))
-    })
+    }))
     names(res) <- sampleNames()
     res
   })
   
   targetPeaks <- reactive({
     req(targetEICs())
-    if (input$type!='isotopic tracer'){
+    isolate(if (input$type!='isotopic tracer'){
       if (input$define == 'formula'){
         theoretical <- as.numeric(pattern()[,2])
       } else {
@@ -214,7 +214,7 @@ function(input, output){
       }
     } else {
       theoretical <- NULL
-    }
+    })
     withProgress(message = 'Peak detection', value = 0.5, {
       getIsotopicPeaks(targetEICs()[[sampleInd()]], SNR.Th=input$snr.th, peakScaleRange=input$scale.th, peakThr=input$int.th, theoretical=theoretical, fineness=input$fineness)
     })
@@ -225,7 +225,7 @@ function(input, output){
   })
   
   whichPeak <- reactive({
-    if (input$type!='isotopic tracer'){
+    isolate(if (input$type!='isotopic tracer'){
       if (input$define == 'formula'){
         which.max(targetPeaks()$PeakInfo$Similarity)
       } else {
@@ -233,7 +233,7 @@ function(input, output){
       }
     } else {
       which.max(colSums(targetPeaks()$PeakArea))
-    }
+    })
   })
   
   output$targetRtCtrl <- renderUI({
@@ -394,4 +394,31 @@ function(input, output){
     },
     contentType = "text/csv"
   )
+  
+  # MS/MS processing
+  compMSMS <- reactive({
+    i <- sampleInd()
+    rawDataMS2 <- LoadMSMS(input$files$datapath[i])
+    precursorMzRange <- as.numeric(targetMzRanges()[1,])
+    precursorRtRange <- c(input$targetRtLeft, input$targetRtRight)
+    getMSMS(rawDataMS2$header, rawDataMS2$peaks, precursorMzRange, precursorRtRange, ppm = input$MatchPPM)
+  })
+  
+  output$compMSMSPlot <- renderPlotly({
+    withProgress(message = 'Reading Data', value = 0.5, {
+      ms2 <- compMSMS()
+      if (!is.null(ms2)){
+        plotMS(ms2)
+      }
+    })
+  })
+  
+  output$MSMSDown <- downloadHandler(
+    filename = "msms.csv",
+    content = function(filename) {
+      write.csv(compMSMS(), filename, row.names = FALSE)
+    },
+    contentType = "text/csv"
+  )
+  
 }

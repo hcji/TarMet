@@ -26,6 +26,7 @@ plotEICs <- function(eics, peaks=NULL, rtrange=NULL) {
   p
 }
 
+
 plotStackBar <- function(SampleAreas) {
   SampleNames <- colnames(SampleAreas)
   SampleRelAreas <- t(t(SampleAreas)/colSums(SampleAreas))
@@ -41,3 +42,16 @@ plotStackBar <- function(SampleAreas) {
   
   p
 }
+
+
+plotMS <- function(ms){
+  p <- plot_ly() %>%
+    layout(xaxis = list(title = 'm/z', range = c(min(ms[,1]-10), max(ms[,1]+10))),
+           yaxis = list(title = 'Intensity'))
+  for (i in 1:nrow(ms)){
+    p <- add_lines(p, x = c(ms[i,1],ms[i,1]), y = c(0, ms[i,2]), showlegend = FALSE, color = I("red"), name = as.character(round(ms[i,1], 3)))
+  }
+  
+  p
+}
+

@@ -1,4 +1,4 @@
-import("mzR", "data.table", "enviPat", "Matrix", "shiny", "plotly", "MassSpecWavelet")
+import("mzR", "data.table", "enviPat", "Matrix", "shiny", "plotly", "MassSpecWavelet", "MSnbase")
 exportPattern("runTarMet",
               
               # INPUT FUNCTIONS

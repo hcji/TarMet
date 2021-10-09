@@ -39,6 +39,22 @@ shinyUI(fluidPage(
                              )
                            )),
                   
+                  
+                  tabPanel('Metabolite Identification',
+                           sidebarLayout(
+                             sidebarPanel(width = 3,
+                                          fileInput('DbFiles', 'Choose database files', multiple=FALSE),
+                                          numericInput('MatchPPM', 'Precision of spectrum matching (ppm)', 100),
+                                          ),
+                             
+                             mainPanel(
+                               h3('Metabolite MS/MS'),
+                               plotlyOutput('compMSMSPlot'),
+                               downloadButton("MSMSDown", "Download"),
+                             )
+                           )),
+                  
+                  
                   tabPanel('Quantitative Analysis',
                            sidebarLayout(
                              sidebarPanel(width = 3,

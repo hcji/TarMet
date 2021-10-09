@@ -413,12 +413,26 @@ function(input, output){
     })
   })
   
+  MSMSInfo <- reactive({
+    info <- c(compoundName(),
+              formula(),
+              input$adduct,
+              mean(as.numeric(targetMzRanges()[1,])),
+              mean(c(input$targetRtLeft, input$targetRtRight))
+    )
+    names(info) <- c('NAME', 'FORMULA', 'PRECURSORTYPE', 'PRECURSORMZ', 'RETENTIONTIME')
+    info
+  })
+  
   output$MSMSDown <- downloadHandler(
-    filename = "msms.csv",
+    filename = paste(compoundName(), ".msp", sep=''),
     content = function(filename) {
-      write.csv(compMSMS(), filename, row.names = FALSE)
+      WriteMSP(compID, list(info = MSMSInfo(), spec=compMSMS()), filename)
     },
-    contentType = "text/csv"
+    contentType = "msp"
   )
   
 }
+
+
+

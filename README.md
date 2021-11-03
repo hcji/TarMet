@@ -1,12 +1,10 @@
 ## TarMet
 TarMet is a shiny application for targeted metabolic analyses based on mass spectrometry.
 
-### Known bug
-1. Show error massage when re-input some parameters, but not affect the result.
 
 ### In the future
-1. Allow run in command line.
-2. Allow multi isotope tracer, like 13C and 15N.
+1. Support data-independent acquisition.
+2. Support MS/MS library verification.
 
 ### Installation  
 

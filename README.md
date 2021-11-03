@@ -8,12 +8,6 @@ TarMet is a shiny application for targeted metabolic analyses based on mass spec
 
 ### Installation  
 
-### Released version
-
-Download the source package at [url](https://github.com/hcji/TarMet/releases) and install the package locally.
-
-### Development version
-
 	install.packages(c("BiocManager", "rcdk", "tidyr", "devtools", "data.table", "enviPat", "Matrix", "shiny", "plotly"))
 	BiocManager::install("MassSpecWavelet")
 	BiocManager::install("mzR")

@@ -1,20 +1,12 @@
 ## TarMet
 TarMet is a shiny application for targeted metabolic analyses based on mass spectrometry.
 
-### Known bug
-1. Show error massage when re-input some parameters, but not affect the result.
 
 ### In the future
-1. Allow run in command line.
-2. Allow multi isotope tracer, like 13C and 15N.
+1. Support data-independent acquisition.
+2. Support MS/MS library verification.
 
 ### Installation  
-
-### Released version
-
-Download the source package at [url](https://github.com/hcji/TarMet/releases/download/v1.1.1/TarMet_1.1.1.tar.gz) and install the package locally.
-
-### Development version
 
 	install.packages(c("BiocManager", "rcdk", "tidyr", "devtools", "data.table", "enviPat", "Matrix", "shiny", "plotly"))
 	BiocManager::install("MassSpecWavelet")

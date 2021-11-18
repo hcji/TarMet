@@ -59,6 +59,22 @@ getMSMS <- function(header, peaks, precursorMzRange, precursorRtRange, ppm = 100
   }
 }
 
+getMSVec <- function(ms, dmz=0.01){
+  idx <- seq(10, 2000, dmz)
+  vec <- rep(0, length(idx))
+  for (i in 1:nrow(ms)){
+    m <- ms[i,1]
+    w <- which.min(abs(idx - m))
+    vec[w] <- vec[w] + ms[i,2]
+  }
+  vec <- vec / max(vec)
+  return(vec)
+}
 
-
-
+compareMS <- function(ref, que, dmz){
+  refv <- getMSVec(ref, dmz)
+  quev <- getMSVec(que, dmz)
+  score <- refv %*% quev / sqrt((refv %*% refv) * (quev %*% quev))
+  score <- as.numeric(score)
+  return(score)
+}

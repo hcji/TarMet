@@ -1,5 +1,4 @@
-readMSP = function(file,
-                             threads = 4) {
+readMSP = function(file, threads = 4) {
   msp.data <- readr::read_lines(file)
   if (length(grep("BEGIN IONS", msp.data)) > 0) {
     msp.data <- msp.data[msp.data != ""]
